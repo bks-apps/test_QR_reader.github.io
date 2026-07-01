@@ -100,9 +100,9 @@
         <main class="relative z-20 flex-1 flex flex-col justify-center items-center px-6">
             
             <!-- ── QRコード読み取りモード ── -->
-            <div id="mode-qr" class="w-full flex flex-col items-center gap-6 transition-all duration-500 transform scale-100 opacity-100">
+            <div id="mode-qr" class="w-full flex flex-col items-center transition-all duration-500 transform scale-100 opacity-100">
                 <div class="text-center">
-                    <div class="text-emerald-400 font-bold text-sm tracking-wider uppercase mb-1 drop-shadow flex items-center justify-center gap-1.5 animate-pulse">
+                    <div class="text-emerald-400 font-bold text-lg tracking-wider uppercase mb-1 drop-shadow flex items-center justify-center gap-1.5 animate-pulse">
                         <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
                         枠内にQRコードを映してください
                     </div>
@@ -181,12 +181,11 @@
 
         <!-- フッタ部 -->
         <footer class="relative z-20 w-full bg-gradient-to-t from-slate-950 via-slate-950/95 to-slate-950/80 border-t border-slate-800/60 pb-safe">
-            <div class="px-8 py-3 flex justify-around items-center max-w-xs mx-auto">
+            <div class="px-8 py-3 pb-12 flex justify-around items-start max-w-xs mx-auto">
                 
                 <!-- QR読取りモード切替ボタン -->
                 <button id="btn-mode-qr" class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-300 relative group">
-                    <!-- アクティブ時のインジケーター光 -->
-                    <span id="indicator-qr" class="absolute -top-1 w-8 h-1 bg-emerald-400 rounded-full shadow-[0_0_8px_#34d399] transition-all"></span>
+                    <span id="text-qr" class="text-[10px] font-bold tracking-wide text-emerald-400 transition-all">QR読取</span>
                     <div id="icon-container-qr" class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 transition-all">
                         <!-- QRアイコン -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -199,13 +198,11 @@
                             <path d="M12 12H12.01"/>
                         </svg>
                     </div>
-                    <span id="text-qr" class="text-[10px] font-bold tracking-wide text-emerald-400 transition-all">QR読取</span>
                 </button>
 
                 <!-- 手動モード切替ボタン -->
                 <button id="btn-mode-manual" class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-300 relative group opacity-50">
-                    <!-- 非アクティブ時は非表示 -->
-                    <span id="indicator-manual" class="absolute -top-1 w-8 h-1 bg-amber-400 rounded-full shadow-[0_0_8px_#fbbf24] transition-all scale-0"></span>
+                    <span id="text-manual" class="text-[10px] font-bold tracking-wide text-slate-400 transition-all">手動入力</span>
                     <div id="icon-container-manual" class="p-2 rounded-lg text-slate-400 transition-all">
                         <!-- ペン型アイコン -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -213,9 +210,7 @@
                             <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
                         </svg>
                     </div>
-                    <span id="text-manual" class="text-[10px] font-bold tracking-wide text-slate-400 transition-all">手動入力</span>
                 </button>
-
             </div>
         </footer>
 
@@ -232,7 +227,6 @@
                 <div id="toast-detail" class="text-sm font-bold text-slate-100">ゲスト様 / Welcome!</div>
             </div>
         </div>
-
     </div>
 
     <!-- JavaScript制御 -->
