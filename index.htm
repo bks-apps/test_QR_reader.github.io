@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QR受付スキャナー（スタッフ用）</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 10px; }
+    h2 { color: #333; font-size: 1.2rem; }
+    #reader { max-width: 400px; margin: 0 auto; border-radius: 8px; overflow: hidden; background: #fff; }
+    #result { margin: 20px auto; max-width: 400px; padding: 15px; font-weight: bold; border-radius: 5px; }
+    .success { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
+    .info { background-color: #d1ecf1; color: #0c5460; }
+  </style>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+
+  <h2>QR受付スキャナー</h2>
+  <div id="reader"></div>
+  <div id="result" class="info">カメラを許可してQRをかざしてください</div>
+
+  <script>
+    // ★ここにGASで発行したウェブアプリのURLを貼り付けます★
+    const GAS_URL = "YOUR_GAS_WEBAPP_URL"; 
+
+    let isProcessing = false;
+
+    // QRコード読み取り成功時の処理
+    function onScanSuccess(decodedText, decodedResult) {
+      if (isProcessing) return; // 連続読み取り防止のロック
+      isProcessing = true;
+
+      const resultDiv = document.getElementById('result');
+      resultDiv.className = 'info';
+      resultDiv.textContent = '通信中... (' + decodedText + ')';
+
+      // GASへデータを送信（CORSエラーを避けるためGETメソッドを使用）
+      fetch(`${GAS_URL}?id=${encodeURIComponent(decodedText)}`)
+        .then(response => response.json())
+        .then(data => {
+          // GASからの返答をもとに画面を更新
+          resultDiv.className = data.success ? 'success' : 'error';
+          resultDiv.textContent = data.message;
+          
+          // 2秒後に次の読み取りを再開
+          setTimeout(() => {
+            isProcessing = false;
+            resultDiv.className = 'info';
+            resultDiv.textContent = '次のQRコードをかざしてください';
+          }, 2000);
+        })
+        .catch(error => {
+          resultDiv.className = 'error';
+          resultDiv.textContent = '通信エラーが発生しました';
+          setTimeout(() => { isProcessing = false; }, 3000);
+        });
+    }
+
+    // スキャナーの初期化と起動
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false
+    );
+    html5QrcodeScanner.render(onScanSuccess);
+  </script>
+</body>
+</html>
