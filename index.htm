@@ -220,17 +220,16 @@
         </footer>
 
         <!-- ポップアップ通知（トーストUI） -->
-        <div id="toast" class="absolute bottom-28 left-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-500 backdrop-blur-md">
+        <div id="toast" class="absolute bottom-28 left-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-500 backdrop-blur-md animate-bounce">
             <!-- 成功時のアイコン -->
-            <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 flex-shrink-0 animate-bounce">
+            <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 flex-shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"/>
                 </svg>
             </div>
             <div class="flex-1">
-                <div class="text-xs text-slate-400 tracking-wider font-semibold">SUCCESS</div>
-                <div id="toast-message" class="text-sm font-bold text-slate-100">受付を完了しました</div>
-                <div id="toast-detail" class="text-[10px] text-emerald-400 mt-0.5">ゲスト様 / Welcome!</div>
+                <div id="toast-message" class="text-[10px] text-emerald-400 mt-0.5">受付を完了しました</div>
+                <div id="toast-detail" class="text-sm font-bold text-slate-100">ゲスト様 / Welcome!</div>
             </div>
         </div>
 
@@ -446,13 +445,18 @@
         scanTarget.addEventListener('click', () => {
             // ランダムにゲスト名を変更して受付成功デモ
             const mockGuests = [
-                { name: "山田 太郎 様", dept: "株式会社サンプルテクノロジー / 開発部" },
-                { name: "佐藤 美咲 様", dept: "デジタルソリューションズ株式会社 / 営業推進" },
-                { name: "鈴木 一平 様", dept: "合同会社ネクストデザイン / 代表" }
+                { name: "山田 太郎", dept: "サンプル開発テクノロジー部" },
+                { name: "佐藤 美咲", dept: "デジタルソリューション推進部" },
+                { name: "鈴木 一平", dept: "営業" }
             ];
             const randomGuest = mockGuests[Math.floor(Math.random() * mockGuests.length)];
             
-            showNotification("受付を完了しました", randomGuest.name + " (" + randomGuest.dept + ")", true);
+            //showNotification("受付を完了しました", randomGuest.name + " (" + randomGuest.dept + ")", true);
+            showNotification(
+                "受付を完了しました",
+                randomGuest.dept + "\n" + randomGuest.name,
+                true
+            );
         });
 
         // 手動入力フォーム制御
