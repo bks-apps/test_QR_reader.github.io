@@ -1,68 +1,527 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QR受付スキャナー（スタッフ用）</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 10px; }
-    h2 { color: #333; font-size: 1.2rem; }
-    #reader { max-width: 400px; margin: 0 auto; border-radius: 8px; overflow: hidden; background: #fff; }
-    #result { margin: 20px auto; max-width: 400px; padding: 15px; font-weight: bold; border-radius: 5px; }
-    .success { background-color: #d4edda; color: #155724; }
-    .error { background-color: #f8d7da; color: #721c24; }
-    .info { background-color: #d1ecf1; color: #0c5460; }
-  </style>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>QRコード受付システム</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* スキャン線の縦移動アニメーション */
+        @keyframes scan {
+            0% { top: 4%; opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { top: 96%; opacity: 0.3; }
+        }
+        .scan-line {
+            animation: scan 2s infinite linear;
+        }
+
+        /* 擬似カメラ背景のグリッドアニメーション（カメラ未接続時のビジュアル用） */
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+        }
+        .dummy-bg {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+            animation: gridMove 4s infinite linear;
+        }
+
+        /* セーフエリア対応 */
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 1rem);
+        }
+        .pt-safe {
+            padding-top: env(safe-area-inset-top, 1rem);
+        }
+
+        /* カスタムスクロールバー非表示 */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-slate-950 text-white font-sans overflow-hidden select-none h-screen w-full flex justify-center items-center">
 
-  <h2>QR受付スキャナー</h2>
-  <div id="reader"></div>
-  <div id="result" class="info">カメラを許可してQRをかざしてください</div>
+    <!-- モバイル風コンテナ（PC閲覧時でもスマホの縦長を体験できるように幅を制限、スマホ実機では全画面） -->
+    <div class="relative w-full max-w-md h-full bg-slate-900 flex flex-col justify-between overflow-hidden shadow-2xl border-x border-slate-800">
 
-  <script>
-    // ★ここにGASで発行したウェブアプリのURLを貼り付けます★
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzykP8C3V2GfIn8V28C-FaGUND510AQ7Q-mqNgmS1o3er1-pJWNmGU2OEMeKbgKArEa/exec"; 
+        <!-- カメラレイヤー & ビジュアル背景 -->
+        <div class="absolute inset-0 z-0 bg-slate-950">
+            <!-- 実際のカメラ映像表示用（背面カメラを優先） -->
+            <video id="camera-stream" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700" autoplay playsinline muted></video>
+            
+            <!-- カメラ未接続/起動中のプレースホルダー（ダミーのアニメーション背景） -->
+            <div id="camera-placeholder" class="absolute inset-0 dummy-bg flex flex-col items-center justify-center opacity-100 transition-opacity duration-700">
+                <!-- パルスするレーダー風デザイン -->
+                <div class="relative w-40 h-40 flex items-center justify-center mb-4">
+                    <div class="absolute inset-0 rounded-full border border-emerald-500/20 animate-ping"></div>
+                    <div class="absolute inset-4 rounded-full border border-emerald-500/40 animate-pulse"></div>
+                    <div class="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="animate-pulse">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                    </div>
+                </div>
+                <p id="camera-status-text" class="text-xs text-slate-400 font-mono tracking-widest uppercase">Initializing Camera...</p>
+            </div>
 
-    let isProcessing = false;
+            <!-- カメラの上に重ねるダークオーバーレイ（視認性向上用） -->
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/80 pointer-events-none z-10"></div>
+        </div>
 
-    // QRコード読み取り成功時の処理
-    function onScanSuccess(decodedText, decodedResult) {
-      if (isProcessing) return; // 連続読み取り防止のロック
-      isProcessing = true;
+        <!-- ヘッダ部 -->
+        <header class="relative z-20 w-full pt-safe px-6 pb-4 bg-black">
+            <div class="pt-6 flex flex-col gap-1.5">
+                <!-- タイトル ＆ 日付 -->
+                <div class="flex items-baseline justify-between">
+                    <h1 class="text-xl font-bold tracking-wider text-slate-100 drop-shadow">会議受付</h1>
+                    <span class="text-xs font-semibold px-2 py-0.5 bg-slate-800/80 border border-slate-700 rounded-full text-slate-300 drop-shadow">
+                        2026年7月1日(水)
+                    </span>
+                </div>
+                
+                <!-- 会場情報 -->
+                <div class="flex items-center gap-2 mt-1 text-xs text-emerald-400 font-medium bg-slate-900/85 border border-emerald-500/30 w-fit px-3 py-1.5 rounded-lg backdrop-blur-md shadow-lg shadow-emerald-950/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    <span>会場：第1カンファレンスルーム</span>
+                </div>
+            </div>
+        </header>
 
-      const resultDiv = document.getElementById('result');
-      resultDiv.className = 'info';
-      resultDiv.textContent = '通信中... (' + decodedText + ')';
+        <!-- メイン表示領域（モード切り替え） -->
+        <main class="relative z-20 flex-1 flex flex-col justify-center items-center px-6">
+            
+            <!-- ── QRコード読み取りモード ── -->
+            <div id="mode-qr" class="w-full flex flex-col items-center gap-6 transition-all duration-500 transform scale-100 opacity-100">
+                <div class="text-center">
+                    <div class="text-emerald-400 font-bold text-sm tracking-wider uppercase mb-1 drop-shadow flex items-center justify-center gap-1.5 animate-pulse">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+                        枠内にQRコードを映してください
+                    </div>
+                </div>
 
-      // GASへデータを送信（CORSエラーを避けるためGETメソッドを使用）
-      fetch(`${GAS_URL}?id=${encodeURIComponent(decodedText)}`)
-        .then(response => response.json())
-        .then(data => {
-          // GASからの返答をもとに画面を更新
-          resultDiv.className = data.success ? 'success' : 'error';
-          resultDiv.textContent = data.message;
-          
-          // 2秒後に次の読み取りを再開
-          setTimeout(() => {
-            isProcessing = false;
-            resultDiv.className = 'info';
-            resultDiv.textContent = '次のQRコードをかざしてください';
-          }, 2000);
-        })
-        .catch(error => {
-          resultDiv.className = 'error';
-          resultDiv.textContent = '通信エラーが発生しました';
-          setTimeout(() => { isProcessing = false; }, 3000);
+                <!-- スキャンフレーム（タップでダミースキャン成功デモ） -->
+                <div id="scan-target" class="relative w-96 h-96 border border-transparent rounded-3xl bg-slate-900/10 backdrop-blur-[1px] shadow-2xl flex items-center justify-center cursor-pointer group active:scale-98 transition-transform" title="タップしてスキャンをテスト">
+                    
+                    <!-- 四隅の緑色の枠線（ファインダー） -->
+                    <div class="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl"></div>
+                    <div class="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl"></div>
+                    <div class="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl"></div>
+                    <div class="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl"></div>
+
+                    <!-- スキャンアニメーションレーザー -->
+                    <div class="absolute left-4 right-4 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent rounded-full shadow-[0_0_12px_#10b981] scan-line"></div>
+
+                    <!-- デモ案内（うっすらと中央に表示） -->
+                    <div class="text-center pointer-events-none opacity-40 group-hover:opacity-75 transition-opacity duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-white">
+                            <rect width="5" height="5" x="3" y="3" rx="1"/>
+                            <rect width="5" height="5" x="16" y="3" rx="1"/>
+                            <rect width="5" height="5" x="3" y="16" rx="1"/>
+                            <path d="M21 16V21H16"/>
+                            <path d="M21 12H18"/>
+                            <path d="M12 21V18"/>
+                            <path d="M12 12H12.01"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── 手動入力モード ── -->
+            <div id="mode-manual" class="hidden w-full flex flex-col items-center gap-6 transition-all duration-500 transform scale-95 opacity-0">
+                <div class="text-center">
+                    <div class="text-amber-400 font-bold text-sm tracking-wider uppercase mb-1 drop-shadow flex items-center justify-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="inline">
+                            <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                        </svg>
+                        Manual Entry
+                    </div>
+                    <p class="text-xs text-slate-300 drop-shadow">受付番号を手動で入力してください</p>
+                </div>
+
+                <!-- 手動入力フォームカード -->
+                <div class="w-full max-w-xs bg-slate-900/90 border border-slate-700/80 rounded-2xl p-6 backdrop-blur-xl shadow-2xl flex flex-col gap-5">
+                    <div>
+                        <label class="block text-slate-400 text-[10px] font-bold tracking-wider uppercase mb-2">Registration ID</label>
+                        <div class="relative">
+                            <input type="tel" id="manual-input" placeholder="例: 123456" 
+                                   class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 rounded-xl px-4 py-3.5 text-center text-lg font-bold font-mono tracking-widest text-slate-100 placeholder-slate-600 outline-none transition-all">
+                            <button id="clear-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 決定ボタン -->
+                    <button id="submit-btn" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-amber-950/40 active:scale-98 transition-all flex items-center justify-center gap-2">
+                        <span>受付をする</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-1 text-slate-400 text-[10px]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
+                    </svg>
+                    <span>案内状に記載されている6桁の番号です</span>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- フッタ部 -->
+        <footer class="relative z-20 w-full bg-gradient-to-t from-slate-950 via-slate-950/95 to-slate-950/80 border-t border-slate-800/60 pb-safe">
+            <div class="px-8 py-3 flex justify-around items-center max-w-xs mx-auto">
+                
+                <!-- QR読取りモード切替ボタン -->
+                <button id="btn-mode-qr" class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-300 relative group">
+                    <!-- アクティブ時のインジケーター光 -->
+                    <span id="indicator-qr" class="absolute -top-1 w-8 h-1 bg-emerald-400 rounded-full shadow-[0_0_8px_#34d399] transition-all"></span>
+                    <div id="icon-container-qr" class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 transition-all">
+                        <!-- QRアイコン -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="5" height="5" x="3" y="3" rx="1"/>
+                            <rect width="5" height="5" x="16" y="3" rx="1"/>
+                            <rect width="5" height="5" x="3" y="16" rx="1"/>
+                            <path d="M21 16V21H16"/>
+                            <path d="M21 12H18"/>
+                            <path d="M12 21V18"/>
+                            <path d="M12 12H12.01"/>
+                        </svg>
+                    </div>
+                    <span id="text-qr" class="text-[10px] font-bold tracking-wide text-emerald-400 transition-all">QR読取</span>
+                </button>
+
+                <!-- 手動モード切替ボタン -->
+                <button id="btn-mode-manual" class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-300 relative group opacity-50">
+                    <!-- 非アクティブ時は非表示 -->
+                    <span id="indicator-manual" class="absolute -top-1 w-8 h-1 bg-amber-400 rounded-full shadow-[0_0_8px_#fbbf24] transition-all scale-0"></span>
+                    <div id="icon-container-manual" class="p-2 rounded-lg text-slate-400 transition-all">
+                        <!-- ペン型アイコン -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 20h9"/>
+                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                        </svg>
+                    </div>
+                    <span id="text-manual" class="text-[10px] font-bold tracking-wide text-slate-400 transition-all">手動入力</span>
+                </button>
+
+            </div>
+        </footer>
+
+        <!-- ポップアップ通知（トーストUI） -->
+        <div id="toast" class="absolute bottom-28 left-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-500 backdrop-blur-md">
+            <!-- 成功時のアイコン -->
+            <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 flex-shrink-0 animate-bounce">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <div class="text-xs text-slate-400 tracking-wider font-semibold">SUCCESS</div>
+                <div id="toast-message" class="text-sm font-bold text-slate-100">受付を完了しました</div>
+                <div id="toast-detail" class="text-[10px] text-emerald-400 mt-0.5">ゲスト様 / Welcome!</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript制御 -->
+    <script>
+        // DOM要素の取得
+        const video = document.getElementById('camera-stream');
+        const placeholder = document.getElementById('camera-placeholder');
+        const cameraStatusText = document.getElementById('camera-status-text');
+
+        const modeQr = document.getElementById('mode-qr');
+        const modeManual = document.getElementById('mode-manual');
+        
+        const btnModeQr = document.getElementById('btn-mode-qr');
+        const btnModeManual = document.getElementById('btn-mode-manual');
+        
+        const indicatorQr = document.getElementById('indicator-qr');
+        const indicatorManual = document.getElementById('indicator-manual');
+        const iconQr = document.getElementById('icon-container-qr');
+        const iconManual = document.getElementById('icon-container-manual');
+        const textQr = document.getElementById('text-qr');
+        const textManual = document.getElementById('text-manual');
+
+        const scanTarget = document.getElementById('scan-target');
+        const manualInput = document.getElementById('manual-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+        const toastDetail = document.getElementById('toast-detail');
+
+        // 音声フィードバック用のWeb Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playBeep(success = true) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (success) {
+                // ピピッというさわやかな2音
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                osc.start();
+                
+                setTimeout(() => {
+                    osc.frequency.setValueAtTime(1320, audioCtx.currentTime); // E6
+                }, 80);
+                
+                setTimeout(() => {
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+                    osc.stop(audioCtx.currentTime + 0.15);
+                }, 160);
+            } else {
+                // ブブーというエラー音
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+                osc.stop(audioCtx.currentTime + 0.35);
+            }
+        }
+
+        // 1. カメラストリーム起動
+        async function startCamera() {
+            try {
+                cameraStatusText.innerText = "Accessing Camera...";
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: "environment", // スマホのアウトカメラを指定
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
+                
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    video.classList.remove('opacity-0');
+                    video.classList.add('opacity-100');
+                    placeholder.classList.add('opacity-0');
+                    setTimeout(() => {
+                        placeholder.style.display = 'none';
+                    }, 700);
+                };
+            } catch (err) {
+                console.error("Camera access error:", err);
+                cameraStatusText.innerText = "SIMULATED CAMERA ACTIVE";
+                cameraStatusText.classList.add('text-emerald-500');
+            }
+        }
+
+        // 初期状態でカメラを即座に接続開始
+        window.addEventListener('load', () => {
+            startCamera();
         });
-    }
 
-    // スキャナーの初期化と起動
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false
-    );
-    html5QrcodeScanner.render(onScanSuccess);
-  </script>
+        // 2. モード切替ロジック
+        function switchToQr() {
+            // UIの切り替え
+            modeQr.classList.remove('hidden');
+            setTimeout(() => {
+                modeQr.classList.add('scale-100', 'opacity-100');
+                modeQr.classList.remove('scale-95', 'opacity-0');
+            }, 50);
+            
+            modeManual.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modeManual.classList.add('hidden');
+            }, 300);
+
+            // フッターアイコンのアクティブ表現
+            indicatorQr.classList.remove('scale-0');
+            indicatorQr.classList.add('scale-100');
+            indicatorManual.classList.remove('scale-100');
+            indicatorManual.classList.add('scale-0');
+
+            btnModeQr.classList.remove('opacity-50');
+            btnModeManual.classList.add('opacity-50');
+
+            iconQr.classList.add('bg-emerald-500/10', 'border', 'border-emerald-500/20', 'text-emerald-400');
+            iconQr.classList.remove('text-slate-400');
+            iconManual.classList.remove('bg-amber-500/10', 'border', 'border-amber-500/20', 'text-amber-400');
+            iconManual.classList.add('text-slate-400');
+
+            textQr.classList.add('text-emerald-400');
+            textQr.classList.remove('text-slate-400');
+            textManual.classList.add('text-slate-400');
+            textManual.classList.remove('text-amber-400');
+        }
+
+        function switchToManual() {
+            // UIの切り替え
+            modeManual.classList.remove('hidden');
+            setTimeout(() => {
+                modeManual.classList.add('scale-100', 'opacity-100');
+                modeManual.classList.remove('scale-95', 'opacity-0');
+            }, 50);
+
+            modeQr.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modeQr.classList.add('hidden');
+            }, 300);
+
+            // フッターアイコンのアクティブ表現
+            indicatorManual.classList.remove('scale-0');
+            indicatorManual.classList.add('scale-100');
+            indicatorQr.classList.remove('scale-100');
+            indicatorQr.classList.add('scale-0');
+
+            btnModeManual.classList.remove('opacity-50');
+            btnModeQr.classList.add('opacity-50');
+
+            iconManual.classList.add('bg-amber-500/10', 'border', 'border-amber-500/20', 'text-amber-400');
+            iconManual.classList.remove('text-slate-400');
+            iconQr.classList.remove('bg-emerald-500/10', 'border', 'border-emerald-500/20', 'text-emerald-400');
+            iconQr.classList.add('text-slate-400');
+
+            textManual.classList.add('text-amber-400');
+            textManual.classList.remove('text-slate-400');
+            textQr.classList.add('text-slate-400');
+            textQr.classList.remove('text-emerald-400');
+        }
+
+        btnModeQr.addEventListener('click', switchToQr);
+        btnModeManual.addEventListener('click', switchToManual);
+
+
+        // 3. インタラクション・通知デモ
+        let toastTimeout;
+        function showNotification(message, detail, isSuccess = true) {
+            clearTimeout(toastTimeout);
+            
+            toastMessage.innerText = message;
+            toastDetail.innerText = detail;
+
+            if (isSuccess) {
+                toast.classList.remove('border-rose-500/40');
+                toast.classList.add('border-emerald-500/40');
+                toastDetail.classList.remove('text-rose-400');
+                toastDetail.classList.add('text-emerald-400');
+            } else {
+                toast.classList.remove('border-emerald-500/40');
+                toast.classList.add('border-rose-500/40');
+                toastDetail.classList.remove('text-emerald-400');
+                toastDetail.classList.add('text-rose-400');
+            }
+
+            // トースト表示アニメーション
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            // 成功音を鳴らす
+            playBeep(isSuccess);
+
+            // 3秒後に隠す
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+
+        // QRスキャン成功デモ
+        scanTarget.addEventListener('click', () => {
+            // ランダムにゲスト名を変更して受付成功デモ
+            const mockGuests = [
+                { name: "山田 太郎 様", dept: "株式会社サンプルテクノロジー / 開発部" },
+                { name: "佐藤 美咲 様", dept: "デジタルソリューションズ株式会社 / 営業推進" },
+                { name: "鈴木 一平 様", dept: "合同会社ネクストデザイン / 代表" }
+            ];
+            const randomGuest = mockGuests[Math.floor(Math.random() * mockGuests.length)];
+            
+            showNotification("受付を完了しました", randomGuest.name + " (" + randomGuest.dept + ")", true);
+        });
+
+        // 手動入力フォーム制御
+        submitBtn.addEventListener('click', () => {
+            const val = manualInput.value.trim();
+            if (val === "") {
+                showNotification("エラー: 番号を入力してください", "入力フィールドが空です", false);
+                return;
+            }
+            // 受付シミュレーション
+            showNotification(`番号: ${val} の受付が完了しました`, "確認用パスコード認証成功", true);
+            manualInput.value = "";
+        });
+
+        clearBtn.addEventListener('click', () => {
+            manualInput.value = "";
+            manualInput.focus();
+        });
+
+        // キーボードエンターキーでも決定
+        manualInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitBtn.click();
+            }
+        });
+    
+        /*
+        // ★ここにGASで発行したウェブアプリのURLを貼り付けます★
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzykP8C3V2GfIn8V28C-FaGUND510AQ7Q-mqNgmS1o3er1-pJWNmGU2OEMeKbgKArEa/exec"; 
+
+        let isProcessing = false;
+
+        // QRコード読み取り成功時の処理
+        function onScanSuccess(decodedText, decodedResult) {
+        if (isProcessing) return; // 連続読み取り防止のロック
+        isProcessing = true;
+
+        const resultDiv = document.getElementById('result');
+        resultDiv.className = 'info';
+        resultDiv.textContent = '通信中... (' + decodedText + ')';
+
+        // GASへデータを送信（CORSエラーを避けるためGETメソッドを使用）
+        fetch(`${GAS_URL}?id=${encodeURIComponent(decodedText)}`)
+            .then(response => response.json())
+            .then(data => {
+            // GASからの返答をもとに画面を更新
+            resultDiv.className = data.success ? 'success' : 'error';
+            resultDiv.textContent = data.message;
+            
+            // 2秒後に次の読み取りを再開
+            setTimeout(() => {
+                isProcessing = false;
+                resultDiv.className = 'info';
+                resultDiv.textContent = '次のQRコードをかざしてください';
+            }, 2000);
+            })
+            .catch(error => {
+            resultDiv.className = 'error';
+            resultDiv.textContent = '通信エラーが発生しました';
+            setTimeout(() => { isProcessing = false; }, 3000);
+            });
+        }
+
+        // スキャナーの初期化と起動
+        const html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false
+        );
+        html5QrcodeScanner.render(onScanSuccess);
+        */
+    </script>
 </body>
 </html>
