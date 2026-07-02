@@ -263,10 +263,10 @@
     <div id="toast-appli-info" class="absolute top-[130px] left-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col items-center gap-3.5 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-500 backdrop-blur-md">
 
         <!-- アプリ名＆バージョン -->
-        <div id="toast-message" class="text-lg text-center font-bold text-white mt-0.5 mb-1.5">
+        <div id="toast-message" class="text-lg text-center font-bold text-white mt-0.5">
             会議受付アプリ[QR]
             <!-- バージョン -->
-            <div class="text-sm text-emerald-400 mt-0.5">
+            <div class="text-sm text-emerald-400">
                 ～ <span id="appli-version">verYYYYMM.東京</span> ～
             </div>
         </div>
@@ -348,6 +348,8 @@
         // トーストUI
         const toastDataWait = document.getElementById('toast-getData-wait');
         const toastAppInfo = document.getElementById('toast-appli-info');
+        const btnAppInfoClose = document.getElementById('btn-appInfo-close');
+        
         
 
         // 音声フィードバック用のWeb Audio API
@@ -568,8 +570,8 @@
             let data = await getFetchData(GAS_URL, sendParam);
 
             // 上記処理完了後に、設定データ取得待ちを隠す
-            toastDataWait.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
             toastDataWait.classList.remove('translate-y-0', 'opacity-100');
+            toastDataWait.classList.add('hidden');
 
             // カメラ映像部などのメイン部分を表示
             containor.classList.remove('translate-y-0', 'opacity-0');
@@ -674,10 +676,17 @@
 
             // 何もしなくても60秒後に隠す
             toastTimeout = setTimeout(() => {
-                toastAppInfo.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-                toastAppInfo.classList.remove('translate-y-0', 'opacity-100');
+                closeToastAppInfo();
             }, 60000);
         }
+        function closeToastAppInfo() {
+            // 起動時インフォメーションを隠す
+            toastAppInfo.classList.remove('translate-y-0', 'opacity-100');
+            toastAppInfo.classList.add('hidden');
+        }
+        btnAppInfoClose.addEventListener('click', closeToastAppInfo);
+
+
         function showNotification(message, detail, isSuccess = true) {
             clearTimeout(toastTimeout);
             
@@ -709,6 +718,8 @@
                 toast.classList.remove('translate-y-0', 'opacity-100');
             }, 3000);
         }
+
+
 
         // QRスキャン成功デモ
         scanTarget.addEventListener('click', () => {
