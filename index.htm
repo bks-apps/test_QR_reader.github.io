@@ -202,7 +202,7 @@
 
                 <!-- 手動モード切替ボタン -->
                 <button id="btn-mode-manual" class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-300 relative group opacity-50">
-                    <span id="text-manual" class="text-[10px] font-bold tracking-wide text-slate-400 transition-all">手動入力</span>
+                    <span id="text-manual" class="text-[10px] font-bold tracking-wide text-amber-400 transition-all">手動入力</span>
                     <div id="icon-container-manual" class="p-2 rounded-lg text-slate-400 transition-all">
                         <!-- ペン型アイコン -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -214,17 +214,50 @@
             </div>
         </footer>
 
-        <!-- ポップアップ通知（トーストUI） -->
-        <div id="toast" class="absolute bottom-28 left-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-500 backdrop-blur-md animate-bounce">
+        <!-- 成功時のポップアップ通知（トーストUI） -->
+        <div id="toast" class="absolute top-[230px] left-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-500 backdrop-blur-md">
+
             <!-- 成功時のアイコン -->
             <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 flex-shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"/>
                 </svg>
             </div>
+
+            <!-- メッセージ -->
             <div class="flex-1">
-                <div id="toast-message" class="text-[10px] text-emerald-400 mt-0.5">受付を完了しました</div>
-                <div id="toast-detail" class="text-sm font-bold text-slate-100">ゲスト様 / Welcome!</div>
+                <div id="toast-message" class="text-sm text-emerald-400 mt-0.5 mb-1.5">
+                    受付を完了しました
+                </div>
+                <div id="toast-detail" class="text-lg font-bold text-slate-100">
+                    所属 \n 氏名
+                </div>
+                <div id="toast-detail" class="text-3xl font-bold text-red-400 m-4">
+                    座席： A-1 
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 失敗時のポップアップ通知（トーストUI） -->
+    <div id="toast" class="absolute bottom-28 left-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-500 backdrop-blur-md animate-bounce">
+
+            <!-- 失敗時のアイコン -->
+            <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                </svg>
+            </div>
+
+            <!-- メッセージ -->
+            <div class="flex-1">
+                <div id="toast-message" class="text-sm text-emerald-400 mt-0.5">
+                    受付を完了しました
+                </div>
+                <div id="toast-detail" class="text-lg font-bold text-slate-100">
+                    所属 \n 氏名 
+                </div>
             </div>
         </div>
     </div>
@@ -242,13 +275,9 @@
         const btnModeQr = document.getElementById('btn-mode-qr');
         const btnModeManual = document.getElementById('btn-mode-manual');
         
-        const indicatorQr = document.getElementById('indicator-qr');
-        const indicatorManual = document.getElementById('indicator-manual');
         const iconQr = document.getElementById('icon-container-qr');
         const iconManual = document.getElementById('icon-container-manual');
-        const textQr = document.getElementById('text-qr');
-        const textManual = document.getElementById('text-manual');
-
+        
         const scanTarget = document.getElementById('scan-target');
         const manualInput = document.getElementById('manual-input');
         const submitBtn = document.getElementById('submit-btn');
@@ -409,19 +438,14 @@
             setTimeout(() => {
                 modeQr.classList.add('scale-100', 'opacity-100');
                 modeQr.classList.remove('scale-95', 'opacity-0');
-            }, 50);
+            }, 5);
             
             modeManual.classList.add('scale-95', 'opacity-0');
             setTimeout(() => {
                 modeManual.classList.add('hidden');
-            }, 300);
+            }, 5);
 
             // フッターアイコンのアクティブ表現
-            indicatorQr.classList.remove('scale-0');
-            indicatorQr.classList.add('scale-100');
-            indicatorManual.classList.remove('scale-100');
-            indicatorManual.classList.add('scale-0');
-
             btnModeQr.classList.remove('opacity-50');
             btnModeManual.classList.add('opacity-50');
 
@@ -429,11 +453,6 @@
             iconQr.classList.remove('text-slate-400');
             iconManual.classList.remove('bg-amber-500/10', 'border', 'border-amber-500/20', 'text-amber-400');
             iconManual.classList.add('text-slate-400');
-
-            textQr.classList.add('text-emerald-400');
-            textQr.classList.remove('text-slate-400');
-            textManual.classList.add('text-slate-400');
-            textManual.classList.remove('text-amber-400');
         }
 
         function switchToManual() {
@@ -442,19 +461,14 @@
             setTimeout(() => {
                 modeManual.classList.add('scale-100', 'opacity-100');
                 modeManual.classList.remove('scale-95', 'opacity-0');
-            }, 50);
+            }, 5);
 
             modeQr.classList.add('scale-95', 'opacity-0');
             setTimeout(() => {
                 modeQr.classList.add('hidden');
-            }, 300);
+            }, 5);
 
             // フッターアイコンのアクティブ表現
-            indicatorManual.classList.remove('scale-0');
-            indicatorManual.classList.add('scale-100');
-            indicatorQr.classList.remove('scale-100');
-            indicatorQr.classList.add('scale-0');
-
             btnModeManual.classList.remove('opacity-50');
             btnModeQr.classList.add('opacity-50');
 
@@ -462,11 +476,6 @@
             iconManual.classList.remove('text-slate-400');
             iconQr.classList.remove('bg-emerald-500/10', 'border', 'border-emerald-500/20', 'text-emerald-400');
             iconQr.classList.add('text-slate-400');
-
-            textManual.classList.add('text-amber-400');
-            textManual.classList.remove('text-slate-400');
-            textQr.classList.add('text-slate-400');
-            textQr.classList.remove('text-emerald-400');
         }
 
         btnModeQr.addEventListener('click', switchToQr);
@@ -511,9 +520,18 @@
         scanTarget.addEventListener('click', () => {
             // ランダムにゲスト名を変更して受付成功デモ
             const mockGuests = [
-                { name: "山田 太郎", dept: "サンプル開発テクノロジー部" },
-                { name: "佐藤 美咲", dept: "デジタルソリューション推進部" },
-                { name: "鈴木 一平", dept: "営業" }
+                { name: "ダミー 一郎", dept: "クラウドインテグレーション事業部" }
+                ,{ name: "ダミー 次郎", dept: "人財担当" }
+                ,{ name: "ダミー 三郎", dept: "営業部" }
+                ,{ name: "ダミー 四郎", dept: "ビジネスプロセス事業部" }
+                ,{ name: "ダミー 五郎", dept: "ビジネスイノベーション事業部" }
+                ,{ name: "ダミー 六郎", dept: "バリュークリエイト事業部" }
+                ,{ name: "ダミー 七郎", dept: "ナレッジフォーカス事業部" }
+                ,{ name: "ダミー 八郎", dept: "HMB" }
+                ,{ name: "ダミー 九郎", dept: "COSMOPIA" }
+                ,{ name: "ダミー 十郎", dept: "TARA" }
+                ,{ name: "秋山 竜宏", dept: "ソフトウェアデザイン事業部" }
+                ,{ name: "齋藤 拓", dept: "ソフトウェアデザイン事業部" }
             ];
             const randomGuest = mockGuests[Math.floor(Math.random() * mockGuests.length)];
             
