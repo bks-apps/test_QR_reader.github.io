@@ -400,8 +400,8 @@
                 // QRコードが未検出の場合、処理を抜ける
                 if (!code) { return; }
 
-                // QRコードが検出できた場合、カメラ映像を停止
-                //cameraStop();
+                // QRコードが検出できた場合、カメラ映像を一旦停止する
+                video.pause();
 
                 // 正しいQRコードかどうかのフラグ（初期値：true）
                 let _isCorrect = true;
@@ -414,11 +414,6 @@
 
 
                 console.table(_qr_data);
-                showNotification(
-                    "[Demo]QRコード",
-                    _qr_data,
-                    true
-                );
 
 
                 /*
@@ -430,24 +425,34 @@
                 return (obj.user_no == String(_qr_data[1]));
                 });
                 if (_ret.length == 0) { _isCorrect = false; }
+                */
 
                 // 不正なQRコードだった場合、「不正なQR」の文字を表示し処理を抜ける
                 if (!_isCorrect) {
-                console.warn('QRコード検出：不正なQRコード', _qr_data);
-                drawText('不正なQRコードです');
-                return;
+                    console.warn('QRコード検出：不正なQRコード', _qr_data);
+                    showNotification(
+                        "[Demo]QRコード",
+                        不正なQRコードです,
+                        true
+                    );
+                    return;
                 }
 
                 console.group('QRコード検出：正しいQRコード');
                 console.table(_qr_data);
 
-                // カメラ映像の一旦停止
-                cameraStop();
-
                 // QRコード内容を画面に描画
-                qrdata_chooseSelectbox(_ret[0]);
+                //qrdata_chooseSelectbox(_ret[0]);
+                showNotification(
+                    "[Demo]QRコード",
+                    _qr_data,
+                    true
+                );
+
+
+
+
                 console.groupEnd();
-                */
 
             }  catch (e) {
                 // エラーが発生した場合、何も処理しない
@@ -470,6 +475,9 @@
 
         // 2. モード切替ロジック
         function switchToQr() {
+            // カメラ映像を再開する
+            video.play();
+            
             // UIの切り替え
             modeQr.classList.remove('hidden');
             setTimeout(() => {
@@ -494,7 +502,7 @@
         function switchToManual() {
             
             // カメラ映像を一旦停止する
-            //cameraStop();
+            video.pause();
 
             // UIの切り替え
             modeManual.classList.remove('hidden');
