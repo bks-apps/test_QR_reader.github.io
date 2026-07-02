@@ -6,6 +6,8 @@
     <title>QRコード受付システム</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jsQR Library CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
         /* スキャン線の縦移動アニメーション */
         @keyframes scan {
@@ -51,6 +53,8 @@
 
         <!-- カメラレイヤー & ビジュアル背景 -->
         <div class="absolute inset-0 z-0 bg-slate-950">
+            <canvas id="camera-canvas"></canvas>
+
             <!-- 実際のカメラ映像表示用（背面カメラを優先） -->
             <video id="camera-stream" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700" autoplay playsinline muted></video>
             
@@ -239,9 +243,8 @@
         </div>
     </div>
 
-
     <!-- 失敗時のポップアップ通知（トーストUI） -->
-    <div id="toast" class="absolute bottom-28 left-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-500 backdrop-blur-md animate-bounce">
+    <div id="toast" class="absolute top-[230px] left-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-500 backdrop-blur-md animate-bounce">
 
             <!-- 失敗時のアイコン -->
             <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 flex-shrink-0">
@@ -266,6 +269,8 @@
     <script>
         // DOM要素の取得
         const video = document.getElementById('camera-stream');
+        const canvas = document.getElementById('camera-canvas');
+
         const placeholder = document.getElementById('camera-placeholder');
         const cameraStatusText = document.getElementById('camera-status-text');
 
@@ -357,25 +362,29 @@
             }
         }
 
-        /** QRコードの検出
+        /** QRコードの検出 */
         async function checkImage() {
             try {
                 // settimeoutで常に再起呼び出しされるため、カメラ停止中は処理をせずに抜ける
-                if (!g_numCaramaAniFrameId) { return; }
+                // if (!g_numCaramaAniFrameId) { return; }
                 
                 // 初期化（描画済みの赤い枠、設定済みの社員情報などを消す）
-                crearRect();
+                // crearRect();
 
                 // imageDataを作ってjsQRに渡す
-                const imageData = ctx.getImageData(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT);
-                const code = jsQR(imageData.data, VIDEO_WIDTH, VIDEO_HEIGHT);
+                const ctx = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, video.videoWidth, video.videoHeight);
 
-                // QRコードが未検出の場合、赤い枠を消して処理を抜ける
+                // QRコードが未検出の場合、処理を抜ける
                 if (!code) { return; }
-            
-                // QRコードが検出できた場合、赤い枠を描画
-                crearInputValues();
-                drawRect(code.location);
+
+                //// QRコードが検出できた場合、赤い枠を描画
+                //crearInputValues();
+                //drawRect(code.location);
 
                 // 正しいQRコードかどうかのフラグ（初期値：true）
                 let _isCorrect = true;
@@ -386,6 +395,11 @@
                 else if (typeof _qr_data[0] != 'string') { _isCorrect = false; }
                 else if (typeof _qr_data[1] != 'string') { _isCorrect = false; }
 
+
+                console.table(_qr_data);
+
+
+                /*
                 // _qr_data[0]の値がスプレッドシート取得データの日付と一致するかチェック
                 if (_qr_data[0] != SETTING_DATA.date.trim()) { _isCorrect = false; }
 
@@ -411,6 +425,7 @@
                 // QRコード内容を画面に描画
                 qrdata_chooseSelectbox(_ret[0]);
                 console.groupEnd();
+                */
 
             }  catch (e) {
                 // エラーが発生した場合、何も処理しない
@@ -420,7 +435,7 @@
                 setTimeout(()=>{ checkImage() }, 500);
             }
         }
-        */
+        
 
 
 
@@ -454,7 +469,6 @@
             iconManual.classList.remove('bg-amber-500/10', 'border', 'border-amber-500/20', 'text-amber-400');
             iconManual.classList.add('text-slate-400');
         }
-
         function switchToManual() {
             // UIの切り替え
             modeManual.classList.remove('hidden');
@@ -477,7 +491,6 @@
             iconQr.classList.remove('bg-emerald-500/10', 'border', 'border-emerald-500/20', 'text-emerald-400');
             iconQr.classList.add('text-slate-400');
         }
-
         btnModeQr.addEventListener('click', switchToQr);
         btnModeManual.addEventListener('click', switchToManual);
 
@@ -535,7 +548,6 @@
             ];
             const randomGuest = mockGuests[Math.floor(Math.random() * mockGuests.length)];
             
-            //showNotification("受付を完了しました", randomGuest.name + " (" + randomGuest.dept + ")", true);
             showNotification(
                 "受付を完了しました",
                 randomGuest.dept + "\n" + randomGuest.name,
