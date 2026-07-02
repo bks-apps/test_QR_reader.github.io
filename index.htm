@@ -380,6 +380,8 @@
 
         /** カメラ映像を一旦停止する */
         async function cameraStop() {
+            console.log('cameraStop!');
+
             // videoタグの更新停止
             cancelAnimationFrame(g_numCaramaAniFrameId);
             g_numCaramaAniFrameId = null;
@@ -399,7 +401,7 @@
                 if (!code) { return; }
 
                 // QRコードが検出できた場合、カメラ映像を停止
-                cameraStop();
+                //cameraStop();
 
                 // 正しいQRコードかどうかのフラグ（初期値：true）
                 let _isCorrect = true;
@@ -490,6 +492,10 @@
             iconManual.classList.add('text-slate-400');
         }
         function switchToManual() {
+            
+            // カメラ映像を一旦停止する
+            //cameraStop();
+
             // UIの切り替え
             modeManual.classList.remove('hidden');
             setTimeout(() => {
