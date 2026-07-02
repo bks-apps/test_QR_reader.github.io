@@ -332,6 +332,32 @@
             }
         }
 
+
+
+        async function getFetchData(_url, _param) {
+            try {
+                console.log('getFetchData:', _url);
+                const response = await fetch(_url
+                                            ,{method: "POST", headers: {"Content-Type": "text/plain"}, body: JSON.stringify(_param)}
+                                        );
+                const data = await response.json();
+                console.log(data);
+
+                if (data.status !== "success") {
+                    // GAS処理成功
+                    console.log('GAS側処理正常終了：');
+                    console.table(data.data);
+                    return data.data;
+                } else {
+                    // GAS処理失敗
+                    console.error('GAS側でエラー発生：', data.data);
+                }
+            } catch (error) {
+                // GAS処理呼び出しに失敗
+                console.error('GAS呼び出しに失敗：', error);
+            }
+        }
+
         // 1. カメラストリーム起動
         async function startCamera() {
             try {
@@ -378,7 +404,7 @@
             g_numCaramaAniFrameId = requestAnimationFrame(canvasUpdate);
         }
 
-        /** カメラ映像を一旦停止する */
+        /** カメラ映像を一旦停止する
         async function cameraStop() {
             console.log('cameraStop!');
 
@@ -386,6 +412,7 @@
             cancelAnimationFrame(g_numCaramaAniFrameId);
             g_numCaramaAniFrameId = null;
         }
+        */
 
         /** QRコードの検出 */
         async function checkImage() {
@@ -399,6 +426,12 @@
 
                 // QRコードが未検出の場合、処理を抜ける
                 if (!code) { return; }
+                showNotification(
+                    "[Demo]QRコード",
+                    code,
+                    true
+                );
+
 
                 // QRコードが検出できた場合、カメラ映像を一旦停止する
                 video.pause();
@@ -470,6 +503,15 @@
 
         // 初期状態でカメラを即座に接続開始
         window.addEventListener('load', () => {
+            // 設定データの取得
+            const GAS_URL = 'https://script.google.com/macros/s/AKfycbzykP8C3V2GfIn8V28C-FaGUND510AQ7Q-mqNgmS1o3er1-pJWNmGU2OEMeKbgKArEa/exec';
+
+            const sendParam = {
+                action: ''
+            };
+            getFetchData(GAS_URL, sendParam);
+
+            // カメラの起動
             startCamera();
         });
 
