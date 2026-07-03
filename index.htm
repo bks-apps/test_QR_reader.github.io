@@ -357,7 +357,7 @@
          * @property {string}  seat_meeting       - 座席番号（会議）
          * @property {string}  seat_gathering     - 座席番号（懇親会）
          */
-        var EMPLOYEE_DATA = {};
+        var EMPLOYEE_INFO = {};
 
         /** GASのURL */
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzykP8C3V2GfIn8V28C-FaGUND510AQ7Q-mqNgmS1o3er1-pJWNmGU2OEMeKbgKArEa/exec";
@@ -545,42 +545,36 @@
                 
                 // QRコードが未検出の場合、処理を抜ける
                 if (!code) { return; }
-                showNotification(
-                    "[Demo]QRコード",
-                    code,
-                    true
-                );
-
 
                 // QRコードが検出できた場合、カメラ映像を一旦停止する
                 cameraStop();
 
-                // 正しいQRコードかどうかのフラグ（初期値：true）
-                let _isCorrect = true;
+                // 正しいQRコードかどうかのフラグ（初期値：false）
+                let _isCorrect = false;
 
                 // QRコード内容の入力チェック
+                
                 let _qr_data = code.data.split(',').map((_val) => _val.trim());
+                console.table(_qr_data);
                 if (_qr_data.length != 2) { _isCorrect = false; }
                 else if (typeof _qr_data[0] != 'string') { _isCorrect = false; }
                 else if (typeof _qr_data[1] != 'string') { _isCorrect = false; }
-
-
-                console.table(_qr_data);
-
-
-                /*
-                // _qr_data[0]の値がスプレッドシート取得データの日付と一致するかチェック
-                if (_qr_data[0] != SETTING_DATA.date.trim()) { _isCorrect = false; }
-
-                // _qr_data[1]の値で社員番号を検索し、該当者がいるかチェック
-                let _ret = $.grep(EMPLOYEE_INFO, function (obj, index) {
-                return (obj.user_no == String(_qr_data[1]));
-                });
-                if (_ret.length == 0) { _isCorrect = false; }
-                */
+                else {
+                    // _qr_data[0]の値がスプレッドシート取得データの日付と一致するかチェック
+                    if (_qr_data[0] != SETTING_DATA.date.trim()) { _isCorrect = false; }
+                    
+                    // _qr_data[1]の値で社員番号を検索し、該当者がいるかチェック
+                    let _ret = $.grep(EMPLOYEE_INFO, function (obj, index) {
+                        return (obj.user_no == String(_qr_data[1]));
+                    });
+                    if (_ret.length == 0) { _isCorrect = false; }
+                }
 
                 // 不正なQRコードだった場合、「不正なQR」の文字を表示し処理を抜ける
                 if (!_isCorrect) {
+                    // カメラ映像を再開する
+                    cameraReStart();
+                    
                     console.warn('QRコード検出：不正なQRコード', _qr_data);
                     showToastError(
                         不正なQRコードです
@@ -596,14 +590,13 @@
                 //qrdata_chooseSelectbox(_ret[0]);
                 showNotification(
                     "[Demo]QRコード",
-                    _qr_data,
+                    _qr_data[1],
                     true
                 );
-
-
-
-
                 console.groupEnd();
+
+                // カメラ映像を再開する
+                cameraReStart();
 
             }  catch (e) {
                 // エラーが発生した場合、何も処理しない
@@ -640,8 +633,8 @@
                 // 取得結果
                 SETTING_DATA = data.settingData;
                 console.table(SETTING_DATA);
-                EMPLOYEE_DATA = data.employeeData;
-                console.table(EMPLOYEE_DATA);
+                EMPLOYEE_INFO = data.employeeData;
+                console.table(EMPLOYEE_INFO);
                 console.groupEnd('設定データ＆社員情報一覧の取得');
 
             } catch (fetchError) {
