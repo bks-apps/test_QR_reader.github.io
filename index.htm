@@ -429,7 +429,6 @@
         const qrErrMessage = document.getElementById('qr-error-message');
         
 
-
         // 音声フィードバック用のWeb Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep(success = true) {
@@ -472,11 +471,11 @@
         async function getFetchData(_url, _param) {
             try {
                 console.log('getFetchData:', _url);
-                const response = await fetch(_url
-                                            ,{method: "POST", headers: {"Content-Type": "text/plain"}, body: JSON.stringify(_param)}
+                const response = await fetch(
+                                            _url
+                                            ,{ method: "POST", headers: {"Content-Type": "text/plain"}, body: JSON.stringify(_param) }
                                         );
                 const data = await response.json();
-                
                 if (data.status === "success") {
                     // GAS処理成功
                     console.log('URLFetch正常終了');
@@ -564,7 +563,7 @@
                 // imageDataを作ってjsQRに渡す
                 ctx.drawImage(video, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
                 const imageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                const code = await jsQR(imageData.data, imageData.width, imageData.height);
                 
                 // QRコードが未検出の場合、処理を抜ける
                 if (!code) { return; }
