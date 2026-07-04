@@ -86,7 +86,7 @@
             </div>
 
             <!-- カメラの上に重ねるダークオーバーレイ（視認性向上用） -->
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/80 pointer-events-none z-10"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-gray-950 pointer-events-none z-10"></div>
         </div>
 
         <!-- ヘッダ部 -->
@@ -134,7 +134,7 @@
                 </div>
 
                 <!-- スキャンフレーム（タップでダミースキャン成功デモ） -->
-                <div id="scan-target" class="relative w-80 h-80 border border-transparent rounded-3xl bg-slate-900/10 backdrop-blur-[1px] shadow-2xl flex items-center justify-center cursor-pointer group active:scale-98 transition-transform" title="タップしてスキャンをテスト">
+                <div id="scan-target" class="relative w-80 h-80 border border-transparent rounded-3xl backdrop-blur-[1px] shadow-2xl flex items-center justify-center cursor-pointer group active:scale-98 transition-transform" title="タップしてスキャンをテスト">
                     <!-- 四隅の緑色の枠線 -->
                     <div class="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl"></div>
                     <div class="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl"></div>
@@ -387,6 +387,7 @@
         /** GASのURL送信時に送るパラメータ */
         const sendParam = { action: 'getSettingData' };
 
+        const USE_PHONE = (window.matchMedia('(max-device-width: 768px)').matches);
         const CANVAS_WIDTH = 640;
         const CANVAS_HEIGHT = 360;
 
@@ -510,11 +511,11 @@
                 cameraStatusText.innerText = "Accessing Camera...";
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
-                        facingMode: "environment", // スマホのアウトカメラを指定
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
-                    audio: false
+                        facingMode: (USE_PHONE ? 'environment': 'user')
+                        ,width: (USE_PHONE ? CANVAS_HEIGHT*2: CANVAS_WIDTH*2)    // スマホはカメラ映像が縦長のためwidthとheightを入れ替える
+                        ,height: (USE_PHONE ? CANVAS_WIDTH*2: CANVAS_HEIGHT*2)   // スマホはカメラ映像が縦長のためwidthとheightを入れ替える
+                    }
+                    ,audio: false
                 });
                 
                 video.srcObject = stream;
@@ -540,7 +541,7 @@
                 };
 
                 // QRコードの検出
-                checkImage();
+                //checkImage();
 
             } catch (err) {
                 console.error("Camera access error:", err);
@@ -550,6 +551,7 @@
         }
         /** 💡ループ安定化：スキャンタイマーの開始管理 */
         function startScanLoop() {
+            console.log('startScanLoop');
             if (scanTimerId) { clearTimeout(scanTimerId); }
             scanTimerId = setTimeout(checkImage, 800);
         }
@@ -579,70 +581,70 @@
 
             try {
                 // 💡描画エラー防止：ビデオのフレームが描画可能（readyState >= 2）かチェック
-                if (video.readyState < video.HAVE_CURRENT_DATA) { return; }
-                
-                // imageDataを作ってjsQRに渡す
-                ctx.drawImage(video, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                const imageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                
-                // QRコードが未検出の場合、処理を抜ける
-                if (!code) { return; }
+                if (video.readyState >= video.HAVE_CURRENT_DATA) {
+                    // imageDataを作ってjsQRに渡す
+                    ctx.drawImage(video, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                    const imageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    
+                    // QRコードが検出できた場合
+                    if (code) {
+                        // カメラ映像を一旦停止する
+                        cameraStop();
 
-                // QRコードが検出できた場合、カメラ映像を一旦停止する
-                cameraStop();
+                        // 正しいQRコードかどうかのフラグ（初期値：false）
+                        let _isCorrect = false;
 
-                // 正しいQRコードかどうかのフラグ（初期値：false）
-                let _isCorrect = false;
+                        // QRコード内容の入力チェック
+                        let _qr_data = code.data.split(',').map((_val) => _val.trim());
+                        console.table(_qr_data);
+                        if (_qr_data.length != 2) { console.warn('不正なQRコード検出：データ件数', _qr_data); }
+                        else if (typeof _qr_data[0] != 'string') { console.warn('不正なQRコード検出：1つ目のデータ型', _qr_data); }
+                        else if (typeof _qr_data[1] != 'string') { console.warn('不正なQRコード検出：2つ目のデータ型', _qr_data); }
+                        else {
+                            // _qr_data[0]の値がスプレッドシート取得データの日付と一致するかチェック
+                            if (_qr_data[0] != SETTING_DATA.date.trim()) { console.warn('不正なQRコード検出：設定情報の日付と相違', _qr_data); }
+                            // _qr_data[1]の値で社員番号を検索し、該当者がいるかチェック
+                            else if (EMPLOYEE_INFO.has(_qr_data[1])) {
+                                _isCorrect = true;
+                            }
+                        }
 
-                // QRコード内容の入力チェック
-                let _qr_data = code.data.split(',').map((_val) => _val.trim());
-                console.table(_qr_data);
-                if (_qr_data.length != 2) { console.warn('不正なQRコード検出：データ件数', _qr_data); }
-                else if (typeof _qr_data[0] != 'string') { console.warn('不正なQRコード検出：1つ目のデータ型', _qr_data); }
-                else if (typeof _qr_data[1] != 'string') { console.warn('不正なQRコード検出：2つ目のデータ型', _qr_data); }
-                else {
-                    // _qr_data[0]の値がスプレッドシート取得データの日付と一致するかチェック
-                    if (_qr_data[0] != SETTING_DATA.date.trim()) { console.warn('不正なQRコード検出：設定情報の日付と相違', _qr_data); }
-                    // _qr_data[1]の値で社員番号を検索し、該当者がいるかチェック
-                    else if (EMPLOYEE_INFO.has(_qr_data[1])) {
-                        _isCorrect = true;
+                        // 不正なQRコードだった場合、「不正なQR」の文字を表示し処理を抜ける
+                        if (!_isCorrect) {
+                            qrErrMessage.classList.remove('hidden');
+                            scanTarget.classList.remove('bg-slate-900/10');
+                            scanTarget.classList.add('bg-slate-900/50');
+                            // エラー音
+                            playBeep(false);
+
+                            setTimeout(() => {
+                                // 不正QRエラーメッセージを隠す
+                                qrErrMessage.classList.add('hidden');
+                                scanTarget.classList.remove('bg-slate-900/50');
+                                scanTarget.classList.add('bg-slate-900/10');
+                                // カメラ映像を再開する
+                                cameraReStart();
+                            }, 2000);
+                            return;
+                        }
+
+                        // QRコード内容を画面に描画
+                        console.group('QRコード検出：正しいQRコード');
+                        console.table(_qr_data);
+                        showNotification(
+                            "[Demo]QRコード",
+                            _qr_data[1],
+                            true
+                        );
+                        setTimeout(() => {
+                            // カメラ映像を再開する
+                            cameraReStart();
+                        }, 3000);
+                        console.groupEnd();
+                        return;
                     }
                 }
-
-                // 不正なQRコードだった場合、「不正なQR」の文字を表示し処理を抜ける
-                if (!_isCorrect) {
-                    qrErrMessage.classList.remove('hidden');
-                    scanTarget.classList.remove('bg-slate-900/10');
-                    scanTarget.classList.add('bg-slate-900/50');
-                    // エラー音
-                    playBeep(false);
-
-                    setTimeout(() => {
-                        // 不正QRエラーメッセージを隠す
-                        qrErrMessage.classList.add('hidden');
-                        scanTarget.classList.remove('bg-slate-900/50');
-                        scanTarget.classList.add('bg-slate-900/10');
-                        // カメラ映像を再開する
-                        cameraReStart();
-                    }, 2000);
-                    return;
-                }
-
-                // QRコード内容を画面に描画
-                console.group('QRコード検出：正しいQRコード');
-                console.table(_qr_data);
-                showNotification(
-                    "[Demo]QRコード",
-                    _qr_data[1],
-                    true
-                );
-                setTimeout(() => {
-                    // カメラ映像を再開する
-                    cameraReStart();
-                }, 3000);
-                console.groupEnd();
-                return;
 
             }  catch (e) {
                 // エラーが発生した場合、何も処理しない
