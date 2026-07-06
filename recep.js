@@ -161,9 +161,23 @@ window.onload = async function() {
     /** 不正QRコードの場合のメッセージ */
     qrErrMessage = document.getElementById('qr-error-message');
 
-
     // GETパラメータの取得
     args = getArguments();
+
+    // titleタグの書き換え
+    const title = document.getElementById('appli-title');
+    switch(args.mode) {
+        case 'recep':
+            title.innerText = '会議受付[QR]';
+            break;
+        case 'gathering':
+            title.innerText = '懇親会[QR]';
+            break;
+        default:
+            title.innerText = 'QR受付アプリ';
+            break;
+    }
+
     // GETパラメータの判定①
     if (!checkArguments(args)) {
         showToastError(
@@ -286,9 +300,9 @@ function checkArguments(_params) {
         case 'gathering':
             _params.mode_jp = '懇親会受付';
             break;
-        case 'report':
-            _params.mode_jp = '遅刻欠席連絡';
-            break;
+        // case 'report':
+        //     _params.mode_jp = '遅刻欠席連絡';
+        //     break;
         default:
             _params.mode_jp = 'ｘｘｘ';
             console.error('GETパラメータ不正：modeの値が規定値以外');
@@ -302,11 +316,11 @@ function checkArguments(_params) {
         return false;
     }
 
-    // modeの値が「report」でdateの値がnull
-    if (_params.mode === 'report' && _params.date === null) {
-        console.error('GETパラメータ不正：modeの値が「report」でdateの値がnull');
-        return false;
-    }
+    // // modeの値が「report」でdateの値がnull
+    // if (_params.mode === 'report' && _params.date === null) {
+    //     console.error('GETパラメータ不正：modeの値が「report」でdateの値がnull');
+    //     return false;
+    // }
 
     // 戻り値
     return true;
@@ -352,22 +366,22 @@ function checkParameter(_params) {
         return false;
     }
 
-    // dateの値がnull以外、かつ設定情報のpassの値と相違
-    if (_params.date !== null && _params.date !== SETTING_DATA.date.replace('/', '')) {
-        console.error('GETパラメータ不正：dateの値が相違');
-        return false;
-    }
+    // // dateの値がnull以外、かつ設定情報のpassの値と相違
+    // if (_params.date !== null && _params.date !== SETTING_DATA.date.replace('/', '')) {
+    //     console.error('GETパラメータ不正：dateの値が相違');
+    //     return false;
+    // }
 
     // 戻り値
     return true;
 }
 /** 設定情報画面描画 */
 function drawSettingData(_data) {
-    const title = document.getElementById('appli-title');
+    const mode = document.getElementById('mode-name');
     const datetime = document.getElementById('appli-datetime');
     const venue = document.getElementById('appli-venue');
 
-    title.innerText = _data.mode;
+    mode.innerText = _data.mode;
     datetime.innerText = _data.date;
     switch(_data.mode) {
         case '会議受付':
@@ -375,6 +389,7 @@ function drawSettingData(_data) {
             venue.innerText = _data.venue_meeting;
             break;
         case '懇親会受付':
+            title.innerText = _data.mode.replace('受付','') + '[QR]';
             datetime.innerText += ' ' + _data.gathering_time;
             venue.innerText = _data.venue_gathering;
             break;
