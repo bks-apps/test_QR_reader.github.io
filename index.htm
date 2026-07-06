@@ -62,7 +62,7 @@
             <canvas id="camera-canvas" class="hidden"></canvas>
 
             <!-- 実際のカメラ映像表示用（背面カメラを優先） -->
-            <video id="camera-stream" class="absolute inset-0 w-full h-full object-contain opacity-0 transition-opacity duration-700" autoplay playsinline muted></video>
+            <video id="camera-stream" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700" autoplay playsinline muted></video>
             
             <!-- カメラ未接続/起動中のプレースホルダー（ダミーのアニメーション背景） -->
             <div id="camera-placeholder" class="absolute inset-0 dummy-bg flex flex-col items-center justify-center opacity-100 transition-opacity duration-700">
@@ -247,7 +247,7 @@
     </div>
 
     <!-- 設定データ取得待ちのポップアップ通知 -->
-    <div id="toast-getData-wait" class="absolute top-[230px] left-auto right-auto w-[400px] z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col items-center gap-3.5 transform translate-y-20 hidden pointer-events-none transition-all duration-500 backdrop-blur-md">
+    <div id="toast-getData-wait" class="absolute top-[230px] left-auto right-auto w-[320px] z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col items-center gap-3.5 transform translate-y-20 hidden pointer-events-none transition-all duration-500 backdrop-blur-md">
         <div class="flex flex-center flex-center items-center justify-center">
             <!-- スピナー -->
             <svg class="mr-3 -ml-1 size-8 text-emerald-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -262,7 +262,7 @@
     </div>
 
     <!-- 起動時インフォメーションのポップアップ通知 -->
-    <div id="toast-appli-info" class="absolute top-[130px] left-auto right-auto w-[400px] z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col items-center gap-3.5 transform translate-y-20 hidden pointer-events-none transition-all duration-500 backdrop-blur-md">
+    <div id="toast-appli-info" class="absolute top-[130px] left-auto right-auto w-[320px] z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col items-center gap-3.5 transform translate-y-20 hidden pointer-events-none transition-all duration-500 backdrop-blur-md">
         <!-- アプリ名＆バージョン -->
         <div class="text-lg text-center font-bold text-white mt-0.5">
             会議受付アプリ[QR]
@@ -296,10 +296,10 @@
     </div>
 
     <!-- 成功時のポップアップ通知 -->
-    <div id="toast" class="absolute top-[230px] left-auto right-auto w-[400px] z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 hidden pointer-events-none transition-all duration-500 backdrop-blur-md">
+    <div id="toast" class="absolute top-[230px] left-auto right-auto w-[320px] z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 hidden pointer-events-none transition-all duration-500 backdrop-blur-md">
         <!-- アイコン -->
         <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 flex-shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
             </svg>
         </div>
@@ -319,7 +319,7 @@
     </div>
 
     <!-- エラー時のポップアップ通知 -->
-    <div id="toast-error" class="absolute top-[230px] left-auto right-auto w-[400px] z-50 bg-red-950 border border-red-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 hidden pointer-events-none transition-all duration-500 backdrop-blur-md">
+    <div id="toast-error" class="absolute top-[230px] left-auto right-auto w-[320px] z-50 bg-red-950 border border-red-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3.5 transform translate-y-20 hidden pointer-events-none transition-all duration-500 backdrop-blur-md">
         <!-- アイコン -->
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-10 text-red-500">
             <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
