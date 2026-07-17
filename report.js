@@ -128,8 +128,10 @@ window.onload = async function() {
             kanaInput.dataset.seat = (SETTING_DATA.mode_jp === '会議受付' ? selectedMember.seat_meeting: selectedMember.seat_gathering);
 
             // 氏名と所属に反映
-            nameSelect.innerHTML = `<option value="${selectedMember.name}" selected>${selectedMember.name}</option>`;
-            deptSelect.innerHTML = `<option value="${selectedMember.dept}" selected>${selectedMember.dept}</option>`;
+            nameSelect.innerHTML = '<option value="" >かなを入力／選択すると自動反映されます</option>';
+            nameSelect.innerHTML += `<option value="${selectedMember.name}" selected>${selectedMember.name}</option>`;
+            deptSelect.innerHTML = '<option value="" >かなを入力／選択すると自動反映されます</option>';
+            deptSelect.innerHTML += `<option value="${selectedMember.dept}" selected>${selectedMember.dept}</option>`;
 
             // スタイルをアクティブカラーに変更
             nameSelect.classList.remove('text-slate-500');
@@ -150,9 +152,13 @@ window.onload = async function() {
     meetingStatus.addEventListener('change', handleMeetingStatusChange);
 
     // 「送信」ボタン押下時の処理
-    contactForm.addEventListener('submit', (e) => {
+    contactForm.addEventListener('submit', async (e) => {
         event.preventDefault();
-        sendData();
+
+        let btnSubmit = document.getElementById('btn-submit');
+        btnSubmit.disabled = true;
+        await sendData();
+        btnSubmit.disabled = false;
     });
 
     // 会議欄の切り替え制御
@@ -215,27 +221,17 @@ function handleMeetingStatusChange() {
 }
 
 let toastTimeout;
-/** 受付完了時ポップアップ通知の表示 */
-function showToastSuccess(_message, _seat) {
+/** 登録完了時ポップアップ通知の表示 */
+function showToastSuccess() {
     clearTimeout(toastTimeout);
     
-    let timer = 3000;
-    const toastMessage = document.getElementById('toast-message');
-    const toastSeat = document.getElementById('toast-seat');
-    toastMessage.innerHTML = _message;
-    if (!_seat || _seat === '') {
-        // 座席が未指定の場合
-        _seat = '運営に確認<br/>※事前欠席→参加';
-        timer = 6000;
-    }
-    toastSeat.innerHTML = '座席： ' + _seat;
-
     // 表示
+    let timer = 2000;
     toast.classList.remove('translate-y-20', 'hidden', 'pointer-events-none');
     toast.classList.add('translate-y-0', 'opacity-100');
     playBeep(true);
 
-    // 3秒後に隠す
+    // 2秒後に隠す
     toastTimeout = setTimeout(() => {
         toast.classList.remove('translate-y-0', 'opacity-100');
         toast.classList.add('translate-y-20', 'hidden', 'pointer-events-none');
@@ -256,7 +252,6 @@ async function sendData() {
         ,mail_attach: (SETTING_DATA.mode_jp === '会議受付' ? SETTING_DATA.seating_chart_meeting: SETTING_DATA.seating_chart_gathering)
         // メール送信対象外の所属部署一覧
         ,no_send_mail_dept: SETTING_DATA.no_send_mail_dept.concat()
-
         ,row_no: kanaInput.dataset.rowNo
         ,user_no: kanaInput.dataset.userNo
         ,mail_to: kanaInput.dataset.mail
@@ -280,25 +275,52 @@ async function sendData() {
 
 
     try {
-        // 先に完了メッセージを表示
-        showToastSuccess('登録しました', '');
-        
+        // しばらくお待ちくださいの表示
+        clearTimeout(toastTimeout);
+        let waitMessage = document.getElementById('wait-message');
+        waitMessage.innerText = 'しばらくお待ちください...';
+        toastDataWait.classList.remove('translate-y-20', 'hidden', 'pointer-events-none');
+        toastDataWait.classList.add('translate-y-0', 'opacity-100');
+
         // 遅刻/欠席連絡の登録
         console.groupCollapsed('遅刻/欠席連絡の登録');
         let _action = (SETTING_DATA.mode_jp === '会議受付' ? sendParam_meeting: sendParam_gathering);
         let data = await getFetchData(GAS_URL, 'report.html', args, _action, sendData);
+        
+        // しばらくお待ちくださいを非表示
+        toastDataWait.classList.remove('translate-y-0', 'opacity-100');
+        toastDataWait.classList.add('hidden');
 
+        // 入力息の初期化
+        kanaInput.value = '';
+        nameSelect.value = '';
+        nameSelect.classList.remove('text-slate-100');
+        nameSelect.classList.add('text-slate-500');
+        deptSelect.value = '';
+        deptSelect.classList.remove('text-slate-100');
+        deptSelect.classList.add('text-slate-500');
+        meetingStatus.value = '遅刻';
+        handleMeetingStatusChange();
+        reasonInput.value = '業務都合';
+        timeInput.value = '';
+        let tagMain = document.getElementsByTagName('main');
+        tagMain[0].scrollTo({top: 0, behavior: "auto"});
+
+
+
+        // 完了メッセージを表示
+        showToastSuccess();
         console.groupEnd('遅刻/欠席連絡の登録');
 
     } catch (fetchError) {
+        // しばらくお待ちくださいを非表示
+        toastDataWait.classList.remove('translate-y-0', 'opacity-100');
+        toastDataWait.classList.add('hidden');
+
         showToastError(
             fetchError
             ,false
         );
         return false;
     }
-
-
-
-
 }
