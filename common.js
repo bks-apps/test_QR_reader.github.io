@@ -216,7 +216,7 @@ function showToastError(_message, _autoClose = true) {
 
     // エラーメッセージ
     const toastErrorMessage = document.getElementById('toast-error-message');
-    toastErrorMessage.innerHTML = _message;
+    toastErrorMessage.innerHTML = _message.toString().replace('\n','<br>');
 
     // トースト表示アニメーション
     toastError.classList.remove('translate-y-20', 'hidden', 'pointer-events-none');
