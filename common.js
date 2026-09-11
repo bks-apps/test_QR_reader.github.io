@@ -10,6 +10,7 @@ var args = null;
  * @property {string}  pass                      - アプリ起動用パスワード
  * @property {string}  date                      - 会議日程（yyyy/mm/dd）
  * @property {string}  date_jp                   - 会議日程（yyyy年mm月dd日）
+ * @property {string}  date_short                - 会議日程（yyyymmdd）
  * @property {string}  venue_meeting             - 会議の会場名称
  * @property {string}  meeting_time              - 会議開始時刻（hh:mm）
  * @property {string}  seating_chart_meeting     - 会議会場の座席画像URL
@@ -18,6 +19,7 @@ var args = null;
  * @property {string}  seating_chart_gathering   - 懇親会会場の座席画像URL
  * @property {string}  mail_from                 - メール宛先
  * @property {object}  no_send_mail_dept         - 非メール送信対象の所属
+ * @property {string}  absence_url               - 懇親会欠席URL（メール本文記載用）
  */
 var SETTING_DATA = {};
 
@@ -158,14 +160,17 @@ function setConstants(_data, _key_userno) {
     SETTING_DATA.pass = _data.settingData[6];
     SETTING_DATA.date = _data.settingData[7];
     SETTING_DATA.date_jp = _data.settingData[8];
-    SETTING_DATA.meeting_time = _data.settingData[9];
-    SETTING_DATA.venue_meeting = _data.settingData[10];
-    SETTING_DATA.seating_chart_meeting = _data.settingData[11];
-    SETTING_DATA.gathering_time = _data.settingData[12];
-    SETTING_DATA.venue_gathering = _data.settingData[13];
-    SETTING_DATA.seating_chart_gathering = _data.settingData[14];
-    SETTING_DATA.mail_from = _data.settingData[15];
-    SETTING_DATA.no_send_mail_dept = _data.settingData[16];
+    SETTING_DATA.date_short = _data.settingData[9];
+    SETTING_DATA.meeting_time = _data.settingData[10];
+    SETTING_DATA.venue_meeting = _data.settingData[11];
+    SETTING_DATA.seating_chart_meeting = _data.settingData[12];
+    SETTING_DATA.gathering_time = _data.settingData[13];
+    SETTING_DATA.venue_gathering = _data.settingData[14];
+    SETTING_DATA.seating_chart_gathering = _data.settingData[15];
+    SETTING_DATA.mail_from = _data.settingData[16];
+    SETTING_DATA.no_send_mail_dept = _data.settingData[17];
+    SETTING_DATA.absence_url = _data.settingData[18];
+    console.log('SETTING_DATA（設定情報）');
     console.table(SETTING_DATA);
 
     // 社員一覧（ハッシュテーブルに変換）

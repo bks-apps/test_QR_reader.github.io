@@ -78,13 +78,6 @@ window.onload = async function() {
     /** エラー時のポップアップ通知 */
     toastError = document.getElementById('toast-error');
 
-
-
-
-
-
-
-    
     /** 起動時インフォメーションのポップアップ通知 */
     toastAppInfo = document.getElementById('toast-appli-info');
     btnAppInfoClose = document.getElementById('btn-appInfo-close');
@@ -153,8 +146,6 @@ window.onload = async function() {
     // カメラ映像部などのメイン部分を表示
     containor.classList.remove('hidden');
     containor.classList.add('opacity-100');
-
-
 
     btnModeQr.addEventListener('click', switchToQr);
     btnModeManual.addEventListener('click', switchToManual);
@@ -293,10 +284,8 @@ async function checkImage() {
 
                 // QRコード内容を画面に描画
                 console.group('QRコード検出：正しいQRコード');
-                console.table(_qr_data);
-
-
                 let _employee = EMPLOYEE_INFO.get(_qr_data[1]);
+                console.log('社員情報');
                 console.table(_employee);
                 showToastSuccess(
                     _employee.dept + '<br/>' + _employee.name
@@ -304,15 +293,51 @@ async function checkImage() {
                 );
 
                 // GAS更新処理を呼び出し
-                let data = await getFetchData(GAS_URL, sendParamMeeting);
+                const sendData = {
+                    // GAS実行処理
+                    "action": (SETTING_DATA.mode_jp === '会議受付' ? 'entryMeeting': 'entryGathering')
+                    // データ登録用情報
+                    ,"data": {
+                        "row_no": _employee.row_no
+                        ,"user_no": _employee.user_no
+                        ,"user_dept": _employee.dept
+                        ,"user_name": _employee.name
+                        // データ登録＆メール送信用情報
+                        ,"title": SETTING_DATA.title
+                        ,"date_jp": SETTING_DATA.date_jp
+                        ,"date_short": SETTING_DATA.date_short
+                        ,"venue": (SETTING_DATA.mode_jp === '会議受付' ? SETTING_DATA.venue_meeting: SETTING_DATA.venue_gathering)
+                        ,"app_mode": SETTING_DATA.app_mode
+                        ,"mode": SETTING_DATA.mode_jp.replace('受付', '')
+                        ,"mail_from": SETTING_DATA.mail_from
+                        ,"mail_to": _employee.mail
+                        ,"mail_attach": (SETTING_DATA.mode_jp === '会議受付' ? SETTING_DATA.seating_chart_meeting: SETTING_DATA.seating_chart_gathering)
+                        ,"no_send_mail_dept": SETTING_DATA.no_send_mail_dept.concat()
+                        ,"attendance": {
+                            "meeting": "参加"
+                            ,"gathering": "参加"
+                        }
+                        ,"absence_url": SETTING_DATA.absence_url + '?date=' + SETTING_DATA.date_short + '&id=' + _employee.user_no
+                        
+                        // 座席位置
+                        ,"seat": (SETTING_DATA.mode_jp === '会議受付' ? _employee.seat_meeting: _employee.seat_gathering)
+                        ,"comment": ''  // 空白固定
 
+                        ,"lost_qr_cord": false   // 未使用
+                        ,"lost_staff_card": false   // 未使用
 
-
-
+                        ,"manual": false   // false固定
+                    }
+                }
+                console.table(sendData.action);
+                console.table(sendData.data);
                 setTimeout(() => {
                     // カメラ映像を再開する
                     cameraReStart();
-                }, 3000);
+                }, 5000);
+
+                // GAS更新処理を呼び出し
+                let data = await getFetchData(GAS_URL, 'recep.html', args, sendData.action, sendData.data);
                 console.groupEnd();
                 return;
             }
@@ -378,7 +403,7 @@ function closeToastAppInfo() {
 function showToastSuccess(_message, _seat) {
     clearTimeout(toastTimeout);
     
-    let timer = 3000;
+    let timer = 5000;
     const toastMessage = document.getElementById('toast-message');
     const toastSeat = document.getElementById('toast-seat');
     toastMessage.innerHTML = _message;
@@ -454,64 +479,6 @@ function switchToManual() {
     iconQr.classList.remove('bg-emerald-500/10', 'border', 'border-emerald-500/20', 'text-emerald-400');
     iconQr.classList.add('text-slate-400');
 }
-
-
-/** QRスキャン成功デモ */
-async function scanTargetDemo() {
-    // ランダムにデータ取得して受付成功時ポップアップを表示
-    //const randomId = Math.floor(Math.random() * EMPLOYEE_INFO.size);
-
-
-
-
-    const _employee = Array.from(EMPLOYEE_INFO)[95][1];
-    console.table(_employee);
-    showToastSuccess(
-        _employee.dept + '<br/>' + _employee.name
-        ,_employee.seat_meeting
-    );
-
-    // GAS更新処理を呼び出し
-    const sendData = {
-        // GAS実行処理
-        "action": (SETTING_DATA.mode === '会議受付' ? 'entryMeeting': 'entryGathering')
-        // データ登録用情報
-        ,"data": {
-            "row_no": _employee.row_no
-            ,"user_no": _employee.user_no
-            ,"user_dept": _employee.dept
-            ,"user_name": _employee.name
-            // データ登録＆メール送信用情報
-            ,"title": SETTING_DATA.title
-            ,"date": SETTING_DATA.date_jp
-            ,"venue": (SETTING_DATA.mode === '会議受付' ? SETTING_DATA.venue_meeting: SETTING_DATA.venue_gathering)
-            ,"app_mode": SETTING_DATA.app_mode
-            ,"mode": SETTING_DATA.mode.replace('受付', '')
-            ,"mail_from": SETTING_DATA.mail_from
-            ,"mail_to": _employee.mail
-            ,"mail_attach": (SETTING_DATA.mode === '会議受付' ? SETTING_DATA.seating_chart_meeting: SETTING_DATA.seating_chart_gathering)
-            ,"no_send_mail_dept": SETTING_DATA.no_send_mail_dept.concat()
-            ,"attendance": {
-                "meeting": "参加"
-                ,"gathering": SETTING_DATA.social_gathering
-            }
-            
-            // 座席位置
-            ,"seat": (SETTING_DATA.mode === '会議受付' ? _employee.seat_meeting: _employee.seat-gathering)
-            ,"comment": ''  //reason
-
-            ,"lost_qr_cord": false   //$('#checkLostQrCode').prop('checked')
-            ,"lost_staff_card": false   //$('#checkLostStaffCard').prop('checked')
-
-            // 「かな」欄が有効状態かどうかで、手動受付かどうかを判断する
-            ,"manual": false   // !$('#user_kana').prop('disabled')
-        }
-    }
-    console.table(sendData.action);
-    console.table(sendData.data);
-    
-    let _ret = await getFetchData(GAS_URL, sendData);
-};
 
 // 手動入力フォーム制御
 function btnSubmit() {
