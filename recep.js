@@ -165,10 +165,6 @@ window.onload = async function() {
     // 手動入力フォーム制御
     submitBtn.addEventListener('click', btnSubmit);
 
-
-
-
-
     // フォーカスがあたった瞬間にリストを表示（全件、または入力中の文字で絞り込み）
     kanaInput.addEventListener('focus', updateSuggestions);
 
@@ -587,12 +583,83 @@ function updateSuggestions() {
 }
 
 // 手動入力フォーム制御
-function btnSubmit() {
-    const val = manualInput.value.trim();
-    if (val === "") {
+async function btnSubmit() {
+    const val = kanaInput.value.trim();
+
+    // 未入力チェック
+    if (val === '') {
+        console.error('未入力チェック');
         return;
     }
-    // 受付シミュレーション
-    showToastSuccess(`番号: ${val} の受付が完了しました`, "確認用パスコード認証成功");
-    manualInput.value = "";
+    // 存在しない氏名かなチェック
+    if (!EMPLOYEE_LIST.has(val)){
+        console.error('存在しない氏名かなチェック');
+        return;
+    }
+
+    // 座席情報を画面に描画
+    showToastSuccess(
+        kanaInput.dataset.dept + '<br/>' + kanaInput.dataset.name
+        ,kanaInput.dataset.seat
+    );
+
+    setTimeout(() => {
+        // 入力域の初期化
+        kanaInput.value = '';
+        nameSelect.value = '';
+        nameSelect.classList.remove('text-slate-100');
+        nameSelect.classList.add('text-slate-500');
+        deptSelect.value = '';
+        deptSelect.classList.remove('text-slate-100');
+        deptSelect.classList.add('text-slate-500');
+        meetingStatus.value = '';
+        meetingStatus.classList.remove('text-slate-100');
+        meetingStatus.classList.add('text-slate-500');
+
+        // カメラ映像を再開する
+        switchToQr();
+    }, 2000);
+
+    // GAS更新処理を呼び出し
+    const sendData = {
+        // GAS実行処理
+        "action": (SETTING_DATA.mode_jp === '会議受付' ? 'entryMeeting': 'entryGathering')
+        // データ登録用情報
+        ,"data": {
+            "row_no": kanaInput.dataset.rowNo
+            ,"user_no": kanaInput.dataset.userNo
+            ,"user_dept": kanaInput.dataset.dept
+            ,"user_name": kanaInput.dataset.name
+            // データ登録＆メール送信用情報
+            ,"title": SETTING_DATA.title
+            ,"date_jp": SETTING_DATA.date_jp
+            ,"date_short": SETTING_DATA.date_short
+            ,"venue": (SETTING_DATA.mode_jp === '会議受付' ? SETTING_DATA.venue_meeting: SETTING_DATA.venue_gathering)
+            ,"app_mode": SETTING_DATA.app_mode
+            ,"mode": SETTING_DATA.mode_jp.replace('受付', '')
+            ,"mail_from": SETTING_DATA.mail_from
+            ,"mail_to": kanaInput.dataset.mail
+            ,"mail_attach": (SETTING_DATA.mode_jp === '会議受付' ? SETTING_DATA.seating_chart_meeting: SETTING_DATA.seating_chart_gathering)
+            ,"no_send_mail_dept": SETTING_DATA.no_send_mail_dept.concat()
+            ,"attendance": {
+                "meeting": "参加"
+                ,"gathering": "参加"
+            }
+            ,"absence_url": SETTING_DATA.absence_url + '?date=' + SETTING_DATA.date_short + '&id=' + kanaInput.dataset.userNo
+            
+            // 座席位置
+            ,"seat": kanaInput.dataset.seat
+            ,"comment": ''  // 空白固定
+
+            ,"lost_qr_cord": false   // 未使用
+            ,"lost_staff_card": false   // 未使用
+
+            ,"manual": true   // true固定
+        }
+    }
+    console.table(sendData.action);
+    console.table(sendData.data);
+
+    // GAS更新処理を呼び出し
+    let data = await getFetchData(GAS_URL, 'recep.html', args, sendData.action, sendData.data);
 };

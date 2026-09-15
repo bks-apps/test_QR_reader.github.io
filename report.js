@@ -22,9 +22,6 @@ var timeLabel = HTMLElement;
 var contactForm = HTMLElement;
 
 
-
-
-
 /** 画面ロード時の処理 */
 window.onload = async function() {
 
