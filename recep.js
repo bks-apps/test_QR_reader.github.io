@@ -40,6 +40,7 @@ var nameSelect = HTMLElement;
 var deptSelect = HTMLElement;
 var meetingStatus = HTMLElement;
 var contactForm = HTMLElement;
+var manualClose = HTMLElement;
 
 
 
@@ -93,6 +94,7 @@ window.onload = async function() {
     deptSelect = document.getElementById('dept-select');
     meetingStatus = document.getElementById('meeting-status');
     contactForm = document.getElementById('contact-form');
+    manualClose = document.getElementById('btn-manual-close');
 
 
     // GETパラメータの取得
@@ -226,6 +228,9 @@ window.onload = async function() {
         }
     });
 
+    // 手動モードのダイアログ閉じるボタン
+    manualClose.addEventListener('click', switchToQr);
+
     console.timeEnd('window.onload')
     console.log('アプリ起動完了');
 }
@@ -246,11 +251,11 @@ async function startCamera() {
         
         video.srcObject = stream;
         video.onloadedmetadata = () => {
-            video.play();
             video.classList.remove('opacity-0');
             video.classList.add('opacity-100');
             placeholder.classList.add('opacity-0');
             setTimeout(() => {
+                video.play();
                 placeholder.style.display = 'none';
             }, 700);
 
