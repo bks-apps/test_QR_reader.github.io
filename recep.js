@@ -11,23 +11,17 @@ var scanTimerId = null;
 var containor = HTMLElement;
 var video = HTMLElement;
 var canvas = HTMLElement;
-
 var placeholder = HTMLElement;
 var cameraStatusText = HTMLElement;
-
 var modeQr = HTMLElement;
 var modeManual = HTMLElement;
-
 var btnModeQr = HTMLElement;
 var btnModeManual = HTMLElement;
-
 var iconQr = HTMLElement;
 var iconManual = HTMLElement;
-
 var scanTarget = HTMLElement;
 var manualInput = HTMLElement;
 var submitBtn = HTMLElement;
-var clearBtn = HTMLElement;
 var toast = HTMLElement;
 
 /** 設定データ取得待ちのポップアップ通知 */
@@ -39,6 +33,15 @@ var btnAppInfoClose = HTMLElement;
 var toastError = HTMLElement;
 /** 不正QRコードの場合のメッセージ */
 var qrErrMessage = HTMLElement;
+
+var kanaInput = HTMLElement;
+var suggestionList = HTMLElement;   // 入力候補
+var nameSelect = HTMLElement;
+var deptSelect = HTMLElement;
+var meetingStatus = HTMLElement;
+var contactForm = HTMLElement;
+
+
 
 /** 画面ロード時の処理 */
 window.onload = async function() {
@@ -70,7 +73,6 @@ window.onload = async function() {
     scanTarget = document.getElementById('scan-target');
     manualInput = document.getElementById('manual-input');
     submitBtn = document.getElementById('submit-btn');
-    clearBtn = document.getElementById('clear-btn');
     toast = document.getElementById('toast');
 
     /** 設定データ取得待ちのポップアップ通知 */
@@ -83,6 +85,15 @@ window.onload = async function() {
     btnAppInfoClose = document.getElementById('btn-appInfo-close');
     /** 不正QRコードの場合のメッセージ */
     qrErrMessage = document.getElementById('qr-error-message');
+
+    // 各入力域のDOM要素取得
+    kanaInput = document.getElementById('kana-input');
+    suggestionList = document.getElementById('suggestion-list');
+    nameSelect = document.getElementById('name-select');
+    deptSelect = document.getElementById('dept-select');
+    meetingStatus = document.getElementById('meeting-status');
+    contactForm = document.getElementById('contact-form');
+
 
     // GETパラメータの取得
     args = getArguments();
@@ -114,7 +125,7 @@ window.onload = async function() {
 
         // 取得結果を定数に格納
         console.time('　setConstants')
-        setConstants(data, true);
+        setConstants(data, false);
         console.timeEnd('　setConstants')
         console.groupEnd('設定データ＆社員情報一覧の取得');
 
@@ -151,12 +162,69 @@ window.onload = async function() {
     btnModeManual.addEventListener('click', switchToManual);
     // 手動入力フォーム制御
     submitBtn.addEventListener('click', btnSubmit);
-    clearBtn.addEventListener('click', btnClear);
 
 
-    // QRスキャン成功デモ
-    scanTarget.addEventListener('click', scanTargetDemo);
 
+
+
+    // フォーカスがあたった瞬間にリストを表示（全件、または入力中の文字で絞り込み）
+    kanaInput.addEventListener('focus', updateSuggestions);
+
+    // 文字入力時にもリストをリアルタイムに更新
+    kanaInput.addEventListener('input', updateSuggestions);
+
+    // エンターキーによる誤送信を防止
+    kanaInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.isComposing) {
+            e.preventDefault(); // フォームのsubmit等のデフォルト挙動を阻止
+        }
+    });
+
+    // 候補リストクリック時の選択・連動処理
+    suggestionList.addEventListener('click', (e) => {
+        const clickedItem = e.target.closest('li[data-kana]');
+        if (!clickedItem) return;
+
+        const targetKana = clickedItem.getAttribute('data-kana');
+        const selectedMember = EMPLOYEE_LIST.get(targetKana);
+        console.table(selectedMember);
+
+        if (selectedMember) {
+            // 入力欄にdata属性をセット
+            kanaInput.value = selectedMember.kana;
+            kanaInput.dataset.kana = selectedMember.kana;
+            kanaInput.dataset.rowNo = selectedMember.row_no;
+            kanaInput.dataset.userNo = selectedMember.user_no;
+            kanaInput.dataset.mail = selectedMember.mail;
+            kanaInput.dataset.dept = selectedMember.dept;
+            kanaInput.dataset.name = selectedMember.name;
+            kanaInput.dataset.seat = (SETTING_DATA.mode_jp === '会議受付' ? selectedMember.seat_meeting: selectedMember.seat_gathering);
+
+            // 氏名、所属、会議に反映
+            nameSelect.innerHTML = '<option value="" >かなを入力／選択すると自動反映されます</option>';
+            nameSelect.innerHTML += `<option value="${selectedMember.name}" selected>${selectedMember.name}</option>`;
+            deptSelect.innerHTML = '<option value="" >かなを入力／選択すると自動反映されます</option>';
+            deptSelect.innerHTML += `<option value="${selectedMember.dept}" selected>${selectedMember.dept}</option>`;
+            meetingStatus.innerHTML = '<option value="" >かなを入力／選択すると自動反映されます</option>';
+            meetingStatus.innerHTML += `<option value="参加" selected>⭕参加</option>`;
+
+            // スタイルをアクティブカラーに変更
+            nameSelect.classList.remove('text-slate-500');
+            nameSelect.classList.add('text-slate-100');
+            deptSelect.classList.remove('text-slate-500');
+            deptSelect.classList.add('text-slate-100');
+            meetingStatus.classList.remove('text-slate-500');
+            meetingStatus.classList.add('text-slate-100');
+        }
+        suggestionList.classList.add('hidden');
+    });
+
+    // 枠外をクリックしたら候補リストを閉じる
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#autocomplete-wrapper')) {
+            suggestionList.classList.add('hidden');
+        }
+    });
 
     console.timeEnd('window.onload')
     console.log('アプリ起動完了');
@@ -480,18 +548,46 @@ function switchToManual() {
     iconQr.classList.add('text-slate-400');
 }
 
+/** リスト描画の共通処理（空文字なら全件表示、文字があれば絞り込み）*/
+function updateSuggestions() {
+    // 入力がない場合は全件、ある場合は部分一致でフィルタリング
+    const query = kanaInput.value.trim().toLowerCase();
+    const filtered = query 
+        ? Array.from(EMPLOYEE_LIST.entries()).filter(([key]) => key.includes(query))
+        : Array.from(EMPLOYEE_LIST.entries());
+
+    if (filtered.length > 0) {
+        suggestionList.innerHTML = filtered.map(member => `
+            <li class="px-4 py-2.5 hover:bg-slate-800 text-sm text-slate-200 cursor-pointer transition-colors border-b border-slate-900/50 last:border-0" 
+            data-row-no="` + member[1].row_no + `" 
+            data-user-no="` + member[1].user_no + `" 
+            data-user-dept="` + member[1].dept + `" 
+            data-kana="` + member[1].kana + `" 
+            data-user-name="` + member[1].name + `" 
+            data-mail-to="` + member[1].mail + `" 
+            data-jizen-meeting="` + member[1].meeting + `" 
+            data-jizen-gathering="` + member[1].social_gathering + `" 
+            data-seat-meeting="` + member[1].seat_meeting + `" 
+            data-seat-gathering="` + member[1].seat_gathering + `" 
+            >
+                <div class="font-medium">` + member[1].kana + `</div>
+                <div class="text-xs text-slate-300">` + member[1].name + ` ［` + member[1].dept + `］</div>
+            </li>
+        `).join('');
+        suggestionList.classList.remove('hidden');
+    } else {
+        suggestionList.innerHTML = `<li class="px-4 py-3 text-sm text-slate-600 text-center">該当する候補がいません</li>`;
+        suggestionList.classList.remove('hidden');
+    }
+}
+
 // 手動入力フォーム制御
 function btnSubmit() {
     const val = manualInput.value.trim();
     if (val === "") {
-        showToastSuccess("エラー: 番号を入力してください", "入力フィールドが空です", false);
         return;
     }
     // 受付シミュレーション
     showToastSuccess(`番号: ${val} の受付が完了しました`, "確認用パスコード認証成功");
     manualInput.value = "";
-};
-function btnClear() {
-    manualInput.value = "";
-    manualInput.focus();
 };

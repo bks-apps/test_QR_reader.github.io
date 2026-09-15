@@ -113,7 +113,7 @@ window.onload = async function() {
         if (!clickedItem) return;
 
         const targetKana = clickedItem.getAttribute('data-kana');
-        const selectedMember = EMPLOYEE_INFO.get(targetKana);
+        const selectedMember = EMPLOYEE_LIST.get(targetKana);
         console.table(selectedMember);
 
         if (selectedMember) {
@@ -173,8 +173,8 @@ function updateSuggestions() {
     // 入力がない場合は全件、ある場合は部分一致でフィルタリング
     const query = kanaInput.value.trim().toLowerCase();
     const filtered = query 
-        ? Array.from(EMPLOYEE_INFO.entries()).filter(([key]) => key.includes(query))
-        : Array.from(EMPLOYEE_INFO.entries());
+        ? Array.from(EMPLOYEE_LIST.entries()).filter(([key]) => key.includes(query))
+        : Array.from(EMPLOYEE_LIST.entries());
 
     if (filtered.length > 0) {
         suggestionList.innerHTML = filtered.map(member => `

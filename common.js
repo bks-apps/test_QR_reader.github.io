@@ -38,6 +38,21 @@ var SETTING_DATA = {};
  */
 var EMPLOYEE_INFO = new Map();
 
+/** GASから取得した社員情報一覧（キーは氏名かな）
+ * @property {string}  row_no     - スプレッドシート登録行番号
+ * @property {string}  company    - 会社名
+ * @property {string}  user_no    - 社員番号
+ * @property {string}  name       - 氏名漢字
+ * @property {string}  kana       - 氏名カナ
+ * @property {string}  dept       - 所属
+ * @property {string}  mail       - メールアドレス
+ * @property {string}  meeting    - 事前出欠有無（会議）
+ * @property {string}  social_gathering   - 事前出欠有無（懇親会）
+ * @property {string}  seat_meeting       - 座席番号（会議）
+ * @property {string}  seat_gathering     - 座席番号（懇親会）
+ */
+var EMPLOYEE_LIST = new Map();
+
 /** リロード時のGET化対策：通信キャンセル用コントローラー */
 var fetchController = null;
 
@@ -175,8 +190,9 @@ function setConstants(_data, _key_userno) {
 
     // 社員一覧（ハッシュテーブルに変換）
     if (Array.isArray(_data.employeeInfo)) {
+        // user_noをキーにする
         EMPLOYEE_INFO = new Map(_data.employeeInfo.map(emp => [
-            _key_userno ? String(emp[2]): String(emp[4])    // フラグがtrueの場合user_noをキーにする、falseの場合kanaをキーにする
+            String(emp[2])
             ,{
                 row_no: emp[0]
                 ,company: emp[1]
@@ -191,8 +207,27 @@ function setConstants(_data, _key_userno) {
                 ,seat_gathering: emp[10]
             }
         ]));
+        console.table(EMPLOYEE_INFO);
+
+        // kanaをキーにする
+        EMPLOYEE_LIST = new Map(_data.employeeInfo.map(emp => [
+            String(emp[4])    
+            ,{
+                row_no: emp[0]
+                ,company: emp[1]
+                ,user_no: emp[2]
+                ,name: emp[3]
+                ,kana: emp[4]
+                ,dept: emp[5]
+                ,mail: emp[6]
+                ,meeting: emp[7]
+                ,social_gathering: emp[8]
+                ,seat_meeting: emp[9]
+                ,seat_gathering: emp[10]
+            }
+        ]));
+        console.table(EMPLOYEE_LIST);
     }
-    console.table(EMPLOYEE_INFO);
 }
 
 /** 設定情報画面描画 */
