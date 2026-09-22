@@ -1,8 +1,6 @@
 // DOM要素の取得
 var containor = HTMLElement;
 
-// var toast = HTMLElement;
-
 /** 設定データ取得待ちのポップアップ通知 */
 var toastDataWait = HTMLElement;
 /** エラー時のポップアップ通知 */
@@ -19,9 +17,6 @@ var timeSuffix = HTMLElement;
 var timeLabel = HTMLElement;
 var contactForm = HTMLElement;
 var checkAttention = HTMLElement;
-
-
-
 
 
 /** 画面ロード時の処理 */
@@ -42,8 +37,6 @@ window.onload = async function() {
     /** エラー時のポップアップ通知 */
     toastError = document.getElementById('toast-error');
     
-    // toast = document.getElementById('toast');
-
     // GETパラメータの取得
     args = getArguments();
 
@@ -94,12 +87,6 @@ window.onload = async function() {
     contactForm = document.getElementById('contact-form');
     checkAttention = document.getElementById('check-attention');
 
-    // フォーカスがあたった瞬間にリストを表示（全件、または入力中の文字で絞り込み）
-    //kanaInput.addEventListener('focus', updateSuggestions);
-
-    // 文字入力時にもリストをリアルタイムに更新
-    //kanaInput.addEventListener('input', updateSuggestions);
-
     // エンターキーによる誤送信を防止
     kanaInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.isComposing) {
@@ -137,8 +124,6 @@ window.onload = async function() {
 
     // チェックボックスのチェック状態変更時の処理
     checkAttention.addEventListener('change', (e) => {
-        
-
         let btnSubmit = document.getElementById('btn-submit');
         if (e.target.checked) {
             btnSubmit.style.opacity = '1';
@@ -165,9 +150,6 @@ window.onload = async function() {
         await sendData();
         btnSubmit.disabled = false;
     });
-
-    // 会議欄の切り替え制御
-    //handleMeetingStatusChange();
 
     console.timeEnd()
     console.log('アプリ起動完了');
@@ -218,8 +200,6 @@ function showToastSuccess() {
 }
 
 async function sendData() {
-
-
     let sendData = {
         title: SETTING_DATA.title
         ,date: SETTING_DATA.date_jp
