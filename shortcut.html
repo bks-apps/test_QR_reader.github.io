@@ -1,100 +1,323 @@
-<h2>
-    会議受付アプリ[QR]の起動テスト
-</h2>
-<hr>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会議受付アプリ[QR]の起動テスト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto space-y-6">
 
-<style>
-    li {
-        margin-bottom: 0.5em
-    }
-</style>
+        <!-- ヘッダーエリア -->
+        <header class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+            <div class="flex items-center space-x-3 mb-2">
+                <span class="inline-flex items-center justify-center p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                    </svg>
+                </span>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">会議受付アプリ[QR]の起動テスト</h1>
+            </div>
+            <p class="text-slate-500 text-sm">設定値（会議PASS・日付）を変更すると、対応するURLおよびリンク先が即座に同期・自動更新されます。</p>
+        </header>
 
-26年11月全体会議<br>
-設定シート記載の会議PASS：<input id="input_pass" value="D6SE611E" size=6>
-<hr/>
+        <!-- 設定入力エリア -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+            <h2 class="text-sm font-semibold uppercase tracking-wider text-indigo-600 mb-4 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                全体設定
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 会議PASS入力 -->
+                <div class="space-y-2">
+                    <label for="input_pass" class="block text-sm font-medium text-slate-700">
+                        設定シート記載の会議PASS
+                    </label>
+                    <div class="relative">
+                        <input
+                            type="text"
+                            id="input_pass"
+                            value="D6SE611E"
+                            maxlength="20"
+                            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono text-base tracking-wider focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase"
+                            placeholder="例: D6SE611E"
+                        >
+                    </div>
+                    <span class="text-xs text-slate-400">※URLパラメータ「pass」にリアルタイム反映されます</span>
+                </div>
 
+                <!-- 日付入力 -->
+                <div class="space-y-2">
+                    <label for="input_date" class="block text-sm font-medium text-slate-700">
+                        設定シート記載の日付
+                    </label>
+                    <div class="relative">
+                        <input
+                            type="date"
+                            id="input_date"
+                            value="2026-11-27"
+                            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                        >
+                    </div>
+                    <span class="text-xs text-slate-400">※ハイフンを除去した8桁形式（YYYYMMDD）で「date」に反映されます</span>
+                </div>
+            </div>
+        </section>
 
+        <!-- 正常パターン一覧 -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                <h2 class="text-lg font-bold text-emerald-800 flex items-center gap-2">
+                    <span class="inline-flex p-1 bg-emerald-100 text-emerald-600 rounded-lg">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </span>
+                    正常パターン
+                </h2>
+                <span class="text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
+                    PASS・日付 連動中
+                </span>
+            </div>
 
+            <div class="space-y-6">
+                <!-- 受付グループ -->
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">1. 受付</h3>
+                    <ul class="space-y-2">
+                        <li>
+                            <a
+                                target="_blank"
+                                class="dynamic-url group flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors"
+                                data-template="./recep.html?mode=meeting&pass={PASS}"
+                                data-label="会議受付"
+                                href="./recep.html?mode=meeting&pass=D6SE611E"
+                            >
+                                <span class="font-semibold text-slate-800 group-hover:text-indigo-600 mb-1 sm:mb-0">会議受付</span>
+                                <span class="url-display font-mono text-xs sm:text-sm text-slate-500 bg-slate-100 group-hover:bg-white group-hover:text-indigo-600 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors break-all">
+                                    ./recep.html?mode=meeting&pass=D6SE611E
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                target="_blank"
+                                class="dynamic-url group flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors"
+                                data-template="./recep.html?mode=gathering&pass={PASS}"
+                                data-label="懇親会受付"
+                                href="./recep.html?mode=gathering&pass=D6SE611E"
+                            >
+                                <span class="font-semibold text-slate-800 group-hover:text-indigo-600 mb-1 sm:mb-0">懇親会受付</span>
+                                <span class="url-display font-mono text-xs sm:text-sm text-slate-500 bg-slate-100 group-hover:bg-white group-hover:text-indigo-600 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors break-all">
+                                    ./recep.html?mode=gathering&pass=D6SE611E
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
 
+                <!-- 遅刻/欠席報告グループ -->
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">2. 遅刻 / 欠席報告</h3>
+                    <ul class="space-y-2">
+                        <li>
+                            <a
+                                target="_blank"
+                                class="dynamic-url group flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors"
+                                data-template="./report.html?mode=meeting&date={DATE}"
+                                data-label="会議"
+                                href="./report.html?mode=meeting&date=20261127"
+                            >
+                                <span class="font-semibold text-slate-800 group-hover:text-indigo-600 mb-1 sm:mb-0">会議</span>
+                                <span class="url-display font-mono text-xs sm:text-sm text-slate-500 bg-slate-100 group-hover:bg-white group-hover:text-indigo-600 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors break-all">
+                                    ./report.html?mode=meeting&date=20261127
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                target="_blank"
+                                class="dynamic-url group flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors"
+                                data-template="./report.html?mode=gathering&date={DATE}"
+                                data-label="懇親会"
+                                href="./report.html?mode=gathering&date=20261127"
+                            >
+                                <span class="font-semibold text-slate-800 group-hover:text-indigo-600 mb-1 sm:mb-0">懇親会</span>
+                                <span class="url-display font-mono text-xs sm:text-sm text-slate-500 bg-slate-100 group-hover:bg-white group-hover:text-indigo-600 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors break-all">
+                                    ./report.html?mode=gathering&date=20261127
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
 
+                <!-- 欠席連絡グループ -->
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">3. 欠席連絡</h3>
+                    <ul class="space-y-2">
+                        <li>
+                            <a
+                                target="_blank"
+                                class="dynamic-url group flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors"
+                                data-template="./absence.html?date={DATE}&id=20841"
+                                data-label="懇親会欠席連絡"
+                                href="./absence.html?date=20261127&id=20841"
+                            >
+                                <span class="font-semibold text-slate-800 group-hover:text-indigo-600 mb-1 sm:mb-0">懇親会欠席連絡</span>
+                                <span class="url-display font-mono text-xs sm:text-sm text-slate-500 bg-slate-100 group-hover:bg-white group-hover:text-indigo-600 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors break-all">
+                                    ./absence.html?date=20261127&id=20841
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
 
-<h3>
-    正常パターン
-</h3>
+        <!-- 不正パターン一覧 -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                <h2 class="text-lg font-bold text-rose-700 flex items-center gap-2">
+                    <span class="inline-flex p-1 bg-rose-100 text-rose-600 rounded-lg">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                    </span>
+                    不正パターン
+                </h2>
+                <span class="text-xs font-semibold px-2.5 py-1 bg-rose-50 text-rose-700 rounded-full border border-rose-200">
+                    バリデーションテスト用
+                </span>
+            </div>
 
-<ul>
-    <li>受付
-        <ul>
-            <li>
-                <a target="_blank" href="./recep.html?mode=meeting&pass=D6SE611E">
-                    会議受付（./recep.html?mode=meeting&pass=D6SE611E
-                </a>
-            </li>
-            <li>
-                <a target="_blank" href="./recep.html?mode=gathering&pass=D6SE611E">
-                    懇親会受付（./recep.html?mode=gathering&pass=D6SE611E）
-                </a>
-            </li>
-        </ul>
-    </li>
-    <li>遅刻/欠席報告
-        <ul>
-            <li>
-                <a target="_blank" href="./report.html?mode=meeting&date=20261218">
-                    会議（./report.html?mode=meeting&date=20261218）
-                </a>
-            </li>
-            <li>
-                <a target="_blank" href="./report.html?mode=gathering&date=20261218">
-                    懇親会（./report.html?mode=gathering&date=20261218）
-                </a>
-            </li>
-        </ul>
-    </li>
-    <li>欠席連絡
-        <ul>
-            <li>
-                <a target="_blank" href="./absence.html?date=20261218&id=20841">
-                    懇親会欠席連絡（./absence.html?date=20261218&id=20841）
-                </a>
-            </li>
-        </ul>
-    </li>
-</ul>
+            <div class="space-y-6">
+                <!-- 判定① エラーパターン -->
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">GETパラメータ判定①でエラーになるパターン</h3>
+                    <ul class="space-y-2">
+                        <li>
+                            <a target="_blank" href="./index.html" class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/30 transition-colors">
+                                <span class="font-medium text-slate-700 text-sm">ファイル相違</span>
+                                <span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">./index.html</span>
+                            </a>
+                        </li>
+                        <li>
+                            <!-- PASS連動のファイル相違テスト -->
+                            <a
+                                target="_blank"
+                                class="dynamic-url flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/30 transition-colors"
+                                data-template="./index.html?mode=meeting&pass={PASS}"
+                                data-label="ファイル相違"
+                                href="./index.html?mode=meeting&pass=D6SE611E"
+                            >
+                                <span class="font-medium text-slate-700 text-sm">ファイル相違（PASS付き）</span>
+                                <span class="url-display font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 break-all">./index.html?mode=meeting&pass=D6SE611E</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="./recep.html" class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/30 transition-colors">
+                                <span class="font-medium text-slate-700 text-sm">modeなし</span>
+                                <span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">./recep.html</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="./recep.html?mode=abcdef" class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/30 transition-colors">
+                                <span class="font-medium text-slate-700 text-sm">mode相違</span>
+                                <span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">./recep.html?mode=abcdef</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="./recep.html?mode=meeting" class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/30 transition-colors">
+                                <span class="font-medium text-slate-700 text-sm">mode一致 passなし①</span>
+                                <span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">./recep.html?mode=meeting</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="./recep.html?mode=gathering" class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/30 transition-colors">
+                                <span class="font-medium text-slate-700 text-sm">mode一致 passなし②</span>
+                                <span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">./recep.html?mode=gathering</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="./report.html" class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/30 transition-colors">
+                                <span class="font-medium text-slate-700 text-sm">dateなし</span>
+                                <span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">./report.html</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
 
+                <!-- 判定② エラーパターン（固定の相違テスト値） -->
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">GETパラメータ判定②でエラーになるパターン</h3>
+                    <ul class="space-y-2">
+                        <li>
+                            <a target="_blank" href="./recep.html?mode=meeting&pass=ABCDEFGH" class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/30 transition-colors">
+                                <span class="font-medium text-slate-700 text-sm">mode一致 pass相違（固定値）</span>
+                                <span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">./recep.html?mode=meeting&pass=ABCDEFGH</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="./report.html?date=20000101" class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/30 transition-colors">
+                                <span class="font-medium text-slate-700 text-sm">date相違（固定値）</span>
+                                <span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">./report.html?date=20000101</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
 
-<h3>
-    不正パターン
-</h3>
-<ul>
-    <!-- GETパラメータの判定①でエラーになるパターン -->
-    <li>
-        <a target="_blank" href="./index.html">ファイル相違（./index.html）</a>
-    </li>
-    <li>
-        <a target="_blank" href="./index.html?mode=meeting&pass=D6SE611E">ファイル相違（./index.html?mode=meeting&pass=D6SE611E）</a>
-    </li>
-    <li>
-        <a target="_blank" href="./recep.html">modeなし（./recep.html）</a>
-    </li>
-    <li>
-        <a target="_blank" href="./recep.html?mode=abcdef">mode相違（./recep.html?mode=abcdef）</a>
-    </li>
-    <li>
-        <a target="_blank" href="./recep.html?mode=meeting">mode一致passなし①（./recep.html?mode=recep）</a>
-    </li>
-    <li>
-        <a target="_blank" href="./recep.html?mode=gathering">mode一致passなし②（./recep.html?mode=gathering）</a>
-    </li>
-    <li>
-        <a target="_blank" href="./report.html">dateなし（./report.html）</a>
-    </li>
+    </div>
 
-    <!-- GETパラメータの判定②でエラーになるパターン -->
-    <li>
-        <a target="_blank" href="./recep.html?mode=meeting&pass=ABCDEFGH">mode一致pass相違（./recep.html?mode=meeting&pass=ABCDEFGH）</a>
-    </li>
-    <li>
-        <a target="_blank" href="./report.html?date=20000101">date相違（./report.html?date=20000101）</a>
-    </li>
-</ul>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const passInput = document.getElementById('input_pass');
+            const dateInput = document.getElementById('input_date');
+            const dynamicLinks = document.querySelectorAll('.dynamic-url');
+
+            // URLパラメータおよびテキストを動的に同期・反映する関数
+            function updateDynamicUrls() {
+                const passVal = (passInput.value || '').trim();
+                // 日付のハイフンを除去してYYYYMMDD形式に変換 (例: 2026-11-27 -> 20261127)
+                const rawDate = dateInput.value || '';
+                const dateVal = rawDate.replace(/-/g, '');
+
+                dynamicLinks.forEach(link => {
+                    const template = link.getAttribute('data-template');
+                    if (!template) return;
+
+                    // プレースホルダー {PASS} と {DATE} を現在値に置換
+                    const newUrl = template
+                        .replace('{PASS}', encodeURIComponent(passVal))
+                        .replace('{DATE}', encodeURIComponent(dateVal));
+
+                    // リンクのhrefを更新
+                    link.setAttribute('href', newUrl);
+
+                    // 表示テキスト用の要素があればURL部分を更新
+                    const displaySpan = link.querySelector('.url-display');
+                    if (displaySpan) {
+                        displaySpan.textContent = newUrl;
+                    }
+                });
+            }
+
+            // inputイベントとchangeイベントの両方を監視してリアルタイム反映
+            passInput.addEventListener('input', updateDynamicUrls);
+            dateInput.addEventListener('input', updateDynamicUrls);
+            dateInput.addEventListener('change', updateDynamicUrls);
+
+            // 初期化実行
+            updateDynamicUrls();
+        });
+    </script>
+</body>
+</html>
